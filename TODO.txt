@@ -1,0 +1,23 @@
+https://kenney.nl/assets/modular-buildings
+https://kenney.nl/assets/input-prompts-pixel-16
+https://kenney.nl/assets/nature-kit
+https://kenney.nl/assets/fantasy-town-kit
+https://kenney.nl/assets/mini-market
+
+--- AUDIO ---
+https://kenney.nl/assets/impact-sounds
+https://kenney.nl/assets/interface-sounds
+
+--- QUESTIONS ---
+triangles have more colors but are packed with multiple colors
+raycast
+multiple windows
+
+--- TODO ---
+RAYCAST
+UI
+water, road
+
+--- IDEAS ---
+send river as an sequence of vec3 that have center an radius
+    Same with road textures
