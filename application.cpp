@@ -7,6 +7,10 @@
 
 using std::make_shared;
 
+double temp1 (float x){return (double)x;}
+
+float temp2 (double x, float a, float b) {return a;}
+
 GLuint load_texture_2d(const std::filesystem::path filename) {
     int width, height, channels;
     unsigned char* data = stbi_load(filename.generic_string().data(), &width, &height, &channels, 4);
@@ -137,6 +141,8 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glm::vec4 tempVec4 = glm::vec4(0.0f);
     glNamedBufferStorage(visualize_placement, sizeof(glm::vec4), &tempVec4, GL_DYNAMIC_STORAGE_BIT);
 
+    // animation_functions::ease_in_ease_out(0.5f);
+
     QOL::SubBufferType args1 = QOL::SubBufferType((size_t)visualize_placement, (size_t)0, (size_t)sizeof(glm::vec4));
     QOL::SubBufferType args2 = QOL::SubBufferType((size_t)active_tile_storage, (size_t)(sizeof(ActiveHexTileUBO) - sizeof(float) * 4), (size_t)sizeof(ActiveHexTileUBO));
 
@@ -145,7 +151,6 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
 
     visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<float>, 0.0f, 1.0f);
     visualize_rotation_transitions->directChange(args2, QOL::ChangeBufferSubData);
-
 
     compile_shaders();
 }

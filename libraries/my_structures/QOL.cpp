@@ -9,15 +9,12 @@ namespace QOL{
 
         return mult * ((int)multOf + (rest > 0.5 ? 1 : 0));
     }
+}
 
-
-    template<typename T>
-    T basicTimer(double perc, T start, T end){
-        return (start - end) * (float)perc;
-    }
-
-    template <typename T>
-    void ChangeBufferSubData(FunctionType<T, SubBufferType> data){
-        glNamedBufferSubData(data.args.buffer, data.args.index, data.args.size, data.data);
+namespace animation_functions{
+    double ease_in_ease_out(float t){
+        if(t <= 0.5f) return 2.0f * t * t;
+        t -= 0.5f;
+        return 2.0f * t * (1.0f - t) + 0.5f;
     }
 }

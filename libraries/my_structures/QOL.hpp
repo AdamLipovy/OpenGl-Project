@@ -1,15 +1,18 @@
+
 #pragma once
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext.hpp>
-#include <map>
+#include <cstdlib>
 
 namespace QOL{
     double roundClossest(double val, double mult);
 
     template<typename T>
-    T basicTimer(double perc, T start, T end);
+    T basicTimer(double perc, T start, T end){
+        return (start - end) * (float)perc;
+    }
 
     template <typename T, typename args>
     struct FunctionType {
@@ -25,4 +28,8 @@ namespace QOL{
 
     template <typename T>
     void ChangeBufferSubData(FunctionType<T, SubBufferType>);
+}
+
+namespace animation_functions{
+    double ease_in_ease_out(float t);
 }

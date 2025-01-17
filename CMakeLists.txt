@@ -16,7 +16,7 @@ target_sources(${lecture_name} PUBLIC libraries/my_structures/GameController.cpp
 target_sources(${lecture_name} PUBLIC libraries/my_structures/SceneCameras.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/MapManager.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/QOL.cpp)
-target_sources(${lecture_name} PUBLIC libraries/my_structures/Timer.cpp)
+target_sources(${lecture_name} PUBLIC libraries/my_structures/Timer.hpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/GameTileData.cpp)
 
 add_library(GameController STATIC libraries/my_structures/GameController.cpp

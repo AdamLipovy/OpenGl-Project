@@ -152,8 +152,8 @@ class Application : public PV112Application {
     ActiveHexTileUBO* active_tile_storage;
 
     GLuint visualize_placement = 0;
-    Timer<glm::vec4, QOL::SubBufferType>* visualize_movement_transitions;
-    Timer<float, QOL::SubBufferType>* visualize_rotation_transitions;
+    Timer<glm::vec4, QOL::SubBufferType>* visualize_movement_transitions = nullptr;
+    Timer<float, QOL::SubBufferType>* visualize_rotation_transitions = nullptr;
 
     // ----------------------------------------------------------------------------
     // Constructors & Destructors
@@ -271,3 +271,10 @@ const float hex_normals[] = {
     sqrt3fourth, 0.0f, -0.25f,       sqrt3fourth, 0.0f, -0.25f,       sqrt3fourth, 0.0f, -0.25f,
     sqrt3fourth, 0.0f, -0.25f,       sqrt3fourth, 0.0f, -0.25f,       sqrt3fourth, 0.0f, -0.25f,
 };
+
+namespace QOL{
+    template <typename T>
+    void ChangeBufferSubData(FunctionType<T, SubBufferType> data){
+        glNamedBufferSubData(data.args.buffer, data.args.index, data.args.size, &(data.data));
+    }
+}
