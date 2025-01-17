@@ -13,15 +13,15 @@ target_include_directories(${lecture_name} PUBLIC libraries/my_structures
 target_sources(${lecture_name} PUBLIC libraries/json/json.hpp)
 target_sources(${lecture_name} PUBLIC libraries/SimplexNoise/SimplexNoise.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/GameController.cpp)
-target_sources(${lecture_name} PUBLIC libraries/my_structures/MovingCamera.cpp)
+target_sources(${lecture_name} PUBLIC libraries/my_structures/SceneCameras.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/MapManager.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/QOL.cpp)
+target_sources(${lecture_name} PUBLIC libraries/my_structures/Timer.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/GameTileData.cpp)
 
 add_library(GameController STATIC libraries/my_structures/GameController.cpp
                     libraries/my_structures/GameTileData.cpp
-                    libraries/my_structures/Randomiser.cpp
-                    libraries/my_structures/Timer.cpp)
+                    libraries/my_structures/Randomiser.cpp)
 
 target_include_directories(GameController PUBLIC libraries/my_structures)
 

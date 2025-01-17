@@ -97,11 +97,11 @@ GameController::GameController()
         return;
     }
     status = TARGET;
-    turn = 0;
 
-    // TODO fix swap
     shuffle(&normal_tiles);
     shuffle(&target_tiles);
+
+    optional_map.add(glm::ivec3(0), nullptr);
 
     next_turn();
 }
@@ -186,7 +186,6 @@ size_t GameController::eval()
 }
 
 void GameController::next_turn(){
-    turn++;
     if(status == TARGET){
         if(target_tiles_left != 0){
             selected_tile = target_tiles[target_tiles_count - target_tiles_left];
@@ -266,49 +265,30 @@ void GameController::target_check()
 
 void GameController::reset()
 {
-#ifdef DEBUG
-    printf(" --- reseting game controller ---\n");
-    printf("    freeing normal tiles\n");
-#endif
-#ifdef DEBUG
-    printf("    freeing target tiles\n");
-#endif
+    //TODO
 
-#ifdef DEBUG
-    printf("    freeing target tiles that were done\n");
-#endif
-
-#ifdef DEBUG
-    printf("    loading json file");
-#endif
     if (!load())
     {
         perror("[ERROR] Couldn't load json data - terminating\n");
         return;
     }
     status = TARGET;
-    turn = 0;
 
-#ifdef DEBUG
-    printf("    shuffling normal tiles deck\n");
-#endif
     shuffle(&normal_tiles);
-#ifdef DEBUG
-    printf("    shuffling target tiles deck\n");
-#endif
     shuffle(&target_tiles);
-
-#ifdef DEBUG
-    printf(" --- [DONE] ---\n");
-#endif
+    optional_map.add(glm::ivec3(0), nullptr);
 }
 
 size_t GameController::tile_count(){
-    return turn;
+    return game_map.get_size();
+}
+
+bool GameController::play(glm::vec3 position){
+    return play(SpaceToVec(position));
 }
 
 bool GameController::play(glm::ivec3 position){
-    if(game_map.contains(position)){
+    if(game_map.contains(position) || !optional_map.contains(position)){
         return false;
     }
 
@@ -317,6 +297,11 @@ bool GameController::play(glm::ivec3 position){
         target_data[targets_active] = std::tuple<GameTileData*, glm::ivec3>(selected_tile, position);
         targets_active++;
     }
+    for (size_t i = 0; i < 6; i++)
+    {
+        optional_map.add(position + OFFSETMAP[i], nullptr);
+    }
+    
     target_check();
     if(targets_active < 3){
         status = TARGET;
@@ -331,34 +316,23 @@ glm::vec3 GameController::VecToSpace(glm::ivec3 vec){
     return glm::vec3(SPACEX.x * vec.x + SPACEZ.x * vec.z, 0, SPACEX.z * vec.z + SPACEZ.z * vec.z);
 }
 
-double roundClossest(double val, double mult){
-
-    double multOf = val / mult;
-    double rest = multOf - (int)multOf;
-
-    return mult * ((int)multOf + (rest > 0.5 ? 1 : 0));
-}
-
 glm::ivec3 GameController::SpaceToVec(glm::vec3 vec){
     glm::vec3 aux = glm::vec3(0.0f);
 
-    glm::vec3 roundedVec = glm::vec3(roundClossest(vec.x, 0.5), 0, roundClossest(vec.z, SQRTDIST));
+    glm::vec3 roundedVec = glm::vec3(QOL::roundClossest(vec.x, SQRTDIST), 0, QOL::roundClossest(vec.z, 0.5f));
 
-    int x = (int)roundedVec.x / 0.5;
-    int z = (int)roundedVec.z / SQRTDIST;
-
-    // aux.x + aux.z == x
-    // aux.x - aux.z == z
-
-    // aux.x = z + aux.z
-
-    // 2 aux.z = x - z
-
-    // TODO
+    int x = (int)(roundedVec.x / SQRTDIST);
+    int z = (int)(roundedVec.z / 0.5f);
 
     aux = glm::ivec3(0);
-    aux.z = (x - z) / 2;
-    aux.x = aux.z + z;
+
+    std::cout << std::format("{}, {}\n", x, z);
+    if(abs(x % 2) != abs(z % 2)) { 
+        return aux;
+    }
+
+    aux.x = (z - x) / 2;
+    aux.z = aux.x + x;
 
     return aux;
 }

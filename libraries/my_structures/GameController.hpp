@@ -9,6 +9,7 @@
 #include "Enums.hpp"
 #include "GameTileData.hpp"
 #include "MapManager.hpp"
+#include "QOL.hpp"
 
 #include "../json/json.hpp"
 
@@ -22,8 +23,8 @@ using json = nlohmann::json;
 #define VECY glm::ivec3(1, 0, 1)
 #define VECZ glm::ivec3(0, 0, 1)
 
-#define SPACEX glm::vec3(0.5f, 0, SQRTDIST)
-#define SPACEZ glm::vec3(0.5f, 0, -SQRTDIST)
+#define SPACEX glm::vec3(SQRTDIST, 0, 0.5f)
+#define SPACEZ glm::vec3(-SQRTDIST, 0, 0.5f)
 #endif
 
 #ifndef GAME_DATA_FILE
@@ -46,9 +47,6 @@ private:
     size_t normal_tiles_count;
     // Normal tiles left in its stack
     size_t normal_tiles_left;
-
-    // currently selected tile
-    GameTileData* selected_tile;
 
     // Storage for different tiles from file
 
@@ -79,7 +77,9 @@ private:
     void shuffle(std::vector<T*>*);
 
 public:
-    size_t turn = 0;
+    // currently selected tile
+    GameTileData* selected_tile;
+
     // Position storage for all tiles
     MapManager optional_map;
     MapManager game_map;
@@ -108,8 +108,11 @@ public:
     size_t tile_count();
 
     bool play(glm::ivec3);
+    bool play(glm::vec3);
 
     static glm::vec3 VecToSpace(glm::ivec3);
 
     static glm::ivec3 SpaceToVec(glm::vec3);
+
+    size_t get_score() { return score; }
 };

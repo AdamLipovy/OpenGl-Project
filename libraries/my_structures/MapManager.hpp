@@ -18,7 +18,7 @@ glm::vec3 to3D(glm::ivec3);
 
 class MapManager{
 private:
-    int size;    
+    int size = 0;    
     MAPSTORAGEX storage;
 
     glm::ivec3 to2D(glm::ivec3);

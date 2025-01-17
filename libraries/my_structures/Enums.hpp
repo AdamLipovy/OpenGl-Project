@@ -6,7 +6,7 @@
 #include <cmath>
 
 #ifndef SQRTDIST
-const double CENTER_DIST = std::sqrt(3)/2; // precalculating the value to save time
+const float CENTER_DIST = (float)(std::sqrt(3)/2.0f); // precalculating the value to save time
 #define SQRTDIST CENTER_DIST
 #endif
 

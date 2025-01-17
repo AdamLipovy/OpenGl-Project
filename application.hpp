@@ -15,7 +15,8 @@
 #include <vector>
 
 #include "libraries/my_structures/GameController.hpp"
-#include "libraries/my_structures/MovingCamera.hpp"
+#include "libraries/my_structures/SceneCameras.hpp"
+#include "libraries/my_structures/Timer.hpp"
 #include "libraries/my_structures/QOL.hpp"
 
 #include "math.h"
@@ -71,7 +72,6 @@ public:
 struct ActiveHexTileUBO : public HexTileUBO{
 public:
     // data of current status of animation
-    glm::vec4 cur_position;
     float rotation;
 };
 
@@ -109,6 +109,7 @@ class Application : public PV112Application {
 
     // Main program
     GLuint main_program;
+    GLuint selected_tile_program;
     // TODO: feel free to add as many as you need/like
 
     // List of geometries used in the project
@@ -122,7 +123,7 @@ class Application : public PV112Application {
     // std::shared_ptr<Geometry> bunny;
 
     // Default camera that rotates around center.
-    MovingCamera camera = MovingCamera(false);          
+    MovingCamera camera = MovingCamera(false);
 
     // UBOs
     GLuint camera_buffer = 0;
@@ -140,6 +141,19 @@ class Application : public PV112Application {
 
     // Textures
     GLuint marble_texture = 0;
+
+    // selected tile camera
+    SelectedCamera selected_camera = SelectedCamera(false);
+
+    GLuint selected_camera_buffer = 0;
+    CameraUBO selected_camera_ubo;
+
+    GLuint active_tile_data = 0;
+    ActiveHexTileUBO* active_tile_storage;
+
+    GLuint visualize_placement = 0;
+    Timer<glm::vec4, QOL::SubBufferType>* visualize_movement_transitions;
+    Timer<float, QOL::SubBufferType>* visualize_rotation_transitions;
 
     // ----------------------------------------------------------------------------
     // Constructors & Destructors
@@ -197,10 +211,11 @@ class Application : public PV112Application {
 
 private:
     glm::vec3 RayCast();
-    // @ref https://www.reddit.com/r/opengl/comments/u4wcm3/comment/i4yewfh/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-    glm::vec3 GetMousePos();
 
     void AddTile();
+
+    void tile_setup(glm::vec3 pos, HexTileUBO* adress);
+    void tile_setup(glm::vec3 pos, ActiveHexTileUBO* adress);
 };
 
 const glm::vec4 terrain_color[] = {

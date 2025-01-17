@@ -65,12 +65,12 @@ bool MapManager::remove(glm::ivec3 pos)
     }
 
     sub_map_y->erase(pos.z);
-    size--;
     if (sub_map_y->size() == 0)
     {
         storage.erase(pos.z);
     }
 
+    size--;
     return true;
 }
 
