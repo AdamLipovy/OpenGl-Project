@@ -33,7 +33,7 @@ void MovingCamera::on_mouse_move(double x, double y){
         angle_elevation += dy * angle_sensitivity;
 
         // Clamps the results.
-        angle_elevation = glm::clamp(angle_elevation, 0.2f, 1.5f);
+        angle_elevation = glm::clamp(angle_elevation, 1.0f, 1.5f);
     }
     if (is_zooming) {
         distance *= (1.0f + dy * zoom_sensitivity);
@@ -44,7 +44,7 @@ void MovingCamera::on_mouse_move(double x, double y){
         if (distance > max_distance)
             distance = max_distance;
     }
-    if (is_rotating || is_zooming){ update_eye_pos(); }
+    update_eye_pos();
 }
 
 void MovingCamera::move(int key, int action) {
@@ -106,9 +106,9 @@ void SelectedCamera::on_mouse_move(double x, double y){
         angle_elevation += dy * angle_sensitivity;
 
         // Clamps the results.
-        angle_elevation = glm::clamp(angle_elevation, 0.2f, 1.5f);
+        angle_elevation = glm::clamp(angle_elevation, 1.0f, 1.5f);
     }
-    if (is_rotating){ update_eye_pos(); }
+    update_eye_pos();
 }
 
 void SelectedCamera::move(int key, int action) {

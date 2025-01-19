@@ -17,7 +17,7 @@ private:
     void(*adress)(QOL::FunctionType<T, Args>) = nullptr;
 
     double clamp(double perc){
-        if(perc >= 100){ return 100; }
+        if(perc >= 1){ return 1; }
         else if(perc <= 0){ return 0; }
         return perc;
     }
@@ -43,7 +43,7 @@ public:
             return f_change(Timer::clamp(f((time_left--) / max_size)), start, stop);
         }
         T temp = f_change(Timer::clamp(f((time_left--) / max_size)), start, stop);
-        adress(temp, args);
+        adress(QOL::FunctionType(temp, args));
         return temp;
     }
 
@@ -52,6 +52,11 @@ public:
     void reconfig(T(*f_change)(double, T, T)) { this->f_change = f_change; }
     void changeStart(T zero_val) { start = zero_val; }
     void changeEnd(T hundred_val) { stop = hundred_val; }
+    void changeCurEnd(T hundred_val, bool time_reset) {
+        start = f_change(Timer::clamp(f((time_left) / max_size)), start, stop);
+        stop = hundred_val;
+        if(time_reset) {time_left = max_size;}
+    }
     void directChange(Args parameter, void(*direct_change)(QOL::FunctionType<T, Args>)){
         args = parameter;
         adress = direct_change;

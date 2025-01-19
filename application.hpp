@@ -21,7 +21,7 @@
 
 #include "math.h"
 
-#define sqrt3fourth 0.433f
+#define sqrt3fourth 0.433f // could also be CENTER_DIST / 2 - current solution is faster
 
 // ----------------------------------------------------------------------------
 // UNIFORM STRUCTS
@@ -214,8 +214,8 @@ private:
 
     void AddTile();
 
-    void tile_setup(glm::vec3 pos, HexTileUBO* adress);
-    void tile_setup(glm::vec3 pos, ActiveHexTileUBO* adress);
+    void tile_setup(glm::ivec3 pos, HexTileUBO* adress);
+    void tile_setup(ActiveHexTileUBO* adress);
 };
 
 const glm::vec4 terrain_color[] = {

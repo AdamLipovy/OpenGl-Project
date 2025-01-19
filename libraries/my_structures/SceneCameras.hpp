@@ -19,7 +19,7 @@ public:
     MovingCamera(bool switch_axis = false) : Camera(){
         eye_position = glm::vec3(3.0f, 5.0f, 3.0f);
         update_eye_pos();
-        angle_elevation = 0.5f;
+        angle_elevation = 1.0f;
         update_eye_pos();
     }
 
@@ -27,6 +27,7 @@ public:
     void on_mouse_move(double x, double y);
 
     glm::mat4x4 get_view_matrix() const;
+    float get_distance() { return distance; }
 };
 
 class SelectedCamera : public Camera{
@@ -40,7 +41,7 @@ public:
     SelectedCamera(bool switch_axis = false) : Camera(){
         eye_position = glm::vec3(3.0f, 5.0f, 3.0f);
         distance = 1.5f;
-        angle_elevation = 0.5f;
+        angle_elevation = 1.0f;
         update_eye_pos();
     }
 
@@ -48,5 +49,6 @@ public:
     void on_mouse_move(double x, double y);
 
     glm::mat4x4 get_view_matrix() const;
+    float get_distance() { return distance; }
 };
 

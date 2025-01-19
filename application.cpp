@@ -7,6 +7,8 @@
 
 using std::make_shared;
 
+#define visualize_height -0.1f
+
 double temp1 (float x){return (double)x;}
 
 float temp2 (double x, float a, float b) {return a;}
@@ -134,23 +136,21 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
 
     glNamedBufferStorage(tile_data, sizeof(HexTileUBO) * gm_controller->tiles_count, hex_tile_storage, GL_DYNAMIC_STORAGE_BIT);
 
-    tile_setup(glm::vec3(0.0f), active_tile_storage);
+    tile_setup(active_tile_storage);
 
     glNamedBufferStorage(active_tile_data, sizeof(ActiveHexTileUBO), active_tile_storage, GL_DYNAMIC_STORAGE_BIT);
 
-    glm::vec4 tempVec4 = glm::vec4(0.0f);
-    glNamedBufferStorage(visualize_placement, sizeof(glm::vec4), &tempVec4, GL_DYNAMIC_STORAGE_BIT);
-
-    // animation_functions::ease_in_ease_out(0.5f);
+    glm::vec4 tempVec4 = glm::vec4(0.0f, visualize_height, 0.0f, 0.0f);
+    glNamedBufferStorage(visualize_placement, sizeof(ActiveHexTileUBO), active_tile_storage, GL_DYNAMIC_STORAGE_BIT);
 
     QOL::SubBufferType args1 = QOL::SubBufferType((size_t)visualize_placement, (size_t)0, (size_t)sizeof(glm::vec4));
-    QOL::SubBufferType args2 = QOL::SubBufferType((size_t)active_tile_storage, (size_t)(sizeof(ActiveHexTileUBO) - sizeof(float) * 4), (size_t)sizeof(ActiveHexTileUBO));
+    QOL::SubBufferType args2 = QOL::SubBufferType((size_t)visualize_placement, (size_t)(sizeof(ActiveHexTileUBO) - sizeof(float)), (size_t)sizeof(ActiveHexTileUBO));
 
-    visualize_movement_transitions = new Timer<glm::vec4, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<glm::vec4>, tempVec4, glm::vec4(1.0f));
+    visualize_movement_transitions = new Timer<glm::vec4, QOL::SubBufferType>(300000, animation_functions::ease_in_ease_out, QOL::basicTimer<glm::vec4>, tempVec4, glm::vec4(1.0f));
     visualize_movement_transitions->directChange(args1, QOL::ChangeBufferSubData);
 
-    visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<float>, 0.0f, 1.0f);
-    visualize_rotation_transitions->directChange(args2, QOL::ChangeBufferSubData);
+    visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300000, animation_functions::ease_in_ease_out, QOL::basicTimer<float>, 0.0f, 1.0f);
+    // visualize_rotation_transitions->directChange(args2, QOL::ChangeBufferSubData);
 
     compile_shaders();
 }
@@ -163,10 +163,10 @@ Application::~Application() {
     glDeleteBuffers(1, &selected_camera_buffer);
     glDeleteBuffers(1, &light_buffer);
     glDeleteBuffers(1, &objects_buffer);
-    glDeleteBuffers(1, &visualize_placement);
 
     glDeleteBuffers(1, &tile_data);
     glDeleteBuffers(1, &active_tile_data);
+    glDeleteBuffers(1, &visualize_placement);
     glDeleteBuffers(1, &tile_position_buffer);
     glDeleteBuffers(1, &hexagon_vertexes);
     glDeleteBuffers(1, &hexagon_normal_vertexes);
@@ -192,11 +192,12 @@ void Application::compile_shaders() {
 void Application::update(float delta) {}
 
 void Application::render() {
-    // --------------------------------------------------------------------------
-    // Update UBOs
-    // --------------------------------------------------------------------------
-    // Camera
+    //animations
 
+    visualize_movement_transitions->next_value();
+    visualize_rotation_transitions->next_value();
+
+    // rest
     camera_ubo.position = glm::vec4(camera.get_eye_position(), 1.0f);
     camera_ubo.projection = glm::perspective(glm::radians(45.0f), static_cast<float>(width * 0.75f) / static_cast<float>(height), 0.01f, 1000.0f);
     camera_ubo.view = glm::lookAt(camera.get_eye_position(), camera.look_at, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -241,37 +242,28 @@ void Application::render() {
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, 54, gm_controller->tile_count());
 
-    glViewport((GLsizei)(width * 0.75f), (GLsizei)(height * 0.75f), (GLsizei)(width * 0.25f), (GLsizei)(height * 0.25f));
-
     glUseProgram(selected_tile_program);
 
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, selected_camera_buffer);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, camera_buffer);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, light_buffer);
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, objects_buffer);
 
-    glBindBufferBase(GL_UNIFORM_BUFFER, 3, active_tile_data);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 3, visualize_placement);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, color_buffer);
 
     glDrawArrays(GL_TRIANGLES, 0, 54);
 
+    glBindBufferBase(GL_UNIFORM_BUFFER, 3, active_tile_data);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, selected_camera_buffer);
+    glViewport((GLsizei)(width * 0.75f), (GLsizei)(height * 0.75f), (GLsizei)(width * 0.25f), (GLsizei)(height * 0.25f));
+
+    glDrawArrays(GL_TRIANGLES, 0, 54);
+
     glm::vec3 mousePos = RayCast();
-
-    glm::vec3 tilePosition = glm::vec3(QOL::roundClossest(mousePos.x, SQRTDIST), 0, QOL::roundClossest(mousePos.z, 0.5f));
-    glm::vec3 clossest = glm::vec3(tilePosition);
-    float dist = (mousePos - tilePosition).length();
-    for (size_t i = 0; i < 6; i++)
-    {
-        glm::vec3 x = tilePosition + (glm::vec3)OFFSETMAP[i];
-        if(x.length() < dist) {
-            clossest = x;
-            dist = x.length();
-        }
-        if (dist < SQRTDIST / 2) break;
-    }
     
-    if (gm_controller->optional_map.contains(clossest)){
-
-    }
+    glm::vec3 tilePosition = glm::vec3(QOL::roundClossest(mousePos.x, SQRTDIST), 0, QOL::roundClossest(mousePos.z, 0.5f));
+    // glm::vec3 tilePosition = gm_controller->VecToSpace(gm_controller->SpaceToVec(mousePos));
+    visualize_movement_transitions->changeCurEnd(glm::vec4(mousePos.x, visualize_height, mousePos.z, 0.0f), true);
 }
 
 void Application::render_ui() { 
@@ -311,23 +303,48 @@ glm::vec3 Application::RayCast(){
     double RCy = 0.0;
     glfwGetCursorPos(window, &RCx, &RCy);
 
+    float mouseX = RCx / ((width * 0.75f) * 0.5f) - 1.0f;
+    float mouseY = RCy / (height * 0.5f) - 1.0f;
+
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), static_cast<float>(width * 0.75f) / static_cast<float>(height), 0.01f, 1000.0f);
+    glm::mat4 view = glm::lookAt(camera.get_eye_position(), camera.look_at, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::mat4 invVP = glm::inverse(proj * view);
+    glm::vec4 screenPos = glm::vec4(-mouseX, mouseY, 1.0f, 1.0f);
+    // std::cout << std::format("({}, {}, {}) - ", screenPos.x, screenPos.y, screenPos.z);
+    glm::vec4 worldPos = invVP * screenPos;
+    // std::cout << std::format("({}, {}, {}) - ", worldPos.x, worldPos.y, worldPos.z);
+
+    glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
+    // std::cout << std::format("({}, {}, {})\n", dir.x, dir.y, dir.z);
+
+    float temp = camera.get_distance();
+
+    aux = dir * temp - camera.look_at * 2 + camera.get_eye_position();
+    return aux;
+
     if(RCx > width * 0.75) { return glm::vec3(0.0f); }
     RCx *= 0.75;
 
     glm::vec4 viewport = glm::vec4(0.0f, 0.0f, height, width * 0.75f);
-    glm::vec3 start = glm::unProject(glm::vec3(RCx, RCy, 0.0f), camera.get_view_matrix(), camera_ubo.projection, viewport);
-    glm::vec3 end = glm::unProject(glm::vec3(RCx, RCy, 0.1f), camera.get_view_matrix(), camera_ubo.projection, viewport);
+    glm::vec3 end = glm::unProject(glm::vec3(RCx, -RCy, 0.05f), camera.get_view_matrix(), camera_ubo.projection, viewport);
 
-    glm::vec3 direction = start - end;
+    return end;
+
+    glm::vec3 direction = camera.get_eye_position() - end;
     glm::vec3 normdirection = normalize(direction);
 
-    float mult = (start.y / normdirection.y);
+    float mult = (camera.get_eye_position().y / normdirection.y);
 
     glm::vec3 sub = normdirection * mult;
 
-    aux = start - sub;
+    aux = camera.get_eye_position() - sub;
 
-    aux.z = -aux.z;
+    float z = aux.z;
+    float x = aux.x;
+
+    aux.z = x;
+    aux.x = z;
 
     return aux;
 }
@@ -369,13 +386,14 @@ void Application::AddTile(){
         glNamedBufferSubData(tile_data, index * sizeof(HexTileUBO), sizeof(HexTileUBO), &tileUBO);
 
         ActiveHexTileUBO selectedTileUBO = ActiveHexTileUBO();
-        tile_setup(clossest, &selectedTileUBO);
+        tile_setup(&selectedTileUBO);
 
         glNamedBufferSubData(active_tile_data, 0, sizeof(HexTileUBO), &selectedTileUBO);
+        glNamedBufferSubData(visualize_placement, 0, sizeof(HexTileUBO), &selectedTileUBO);
     }
 }
 
-void Application::tile_setup(glm::vec3 pos, HexTileUBO* adress){
+void Application::tile_setup(glm::ivec3 pos, HexTileUBO* adress){
     GameTileData* first_tile = gm_controller->selected_tile;
 
     first_tile = nullptr;
@@ -401,7 +419,7 @@ void Application::tile_setup(glm::vec3 pos, HexTileUBO* adress){
     adress->river4 = glm::vec4(0);
 }
 
-void Application::tile_setup(glm::vec3 pos, ActiveHexTileUBO* adress){
+void Application::tile_setup(ActiveHexTileUBO* adress){
     GameTileData* first_tile = gm_controller->selected_tile;
 
     adress->position = glm::vec4(0, 0, 0, 1);
