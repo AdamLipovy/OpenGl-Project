@@ -24,11 +24,18 @@ add_library(GameController STATIC libraries/my_structures/GameController.cpp
                     libraries/my_structures/GameTileData.cpp
                     libraries/my_structures/Randomiser.cpp)
 
+add_library(ObjectRenderStorage STATIC libraries/my_structures/ObjectRenderStorage.cpp)
+
 target_include_directories(GameController PUBLIC libraries/my_structures)
 
 find_package(glm CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
 
 target_link_libraries(GameController PUBLIC glm::glm)
+target_link_libraries(ObjectRenderStorage PUBLIC include geometries)
+target_link_libraries(ObjectRenderStorage PRIVATE glad::glad)
+
 
 set(copy_file_name "data.json")
 

@@ -152,6 +152,45 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300000, animation_functions::ease_in_ease_out, QOL::basicTimer<float>, 0.0f, 1.0f);
     // visualize_rotation_transitions->directChange(args2, QOL::ChangeBufferSubData);
 
+
+    ORS::ORS_instanced hexagonRS = ORS::ORS_instanced(
+                                        new ORS::ArrayData(GL_TRIANGLES, 0, 54),
+                                        &main_program
+                                        );
+
+    ORS::BufferData* hexagonBuffers = new ORS::BufferData[7]{
+            ORS::BufferData(GL_UNIFORM_BUFFER, 0, camera_buffer),
+            ORS::BufferData(GL_UNIFORM_BUFFER, 1, light_buffer),
+            ORS::BufferData(GL_UNIFORM_BUFFER, 2, objects_buffer),
+
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 3, tile_data),
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 4, tile_position_buffer),
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 5, color_buffer),
+            ORS::BufferData(GL_VERTEX_ARRAY, 0, hexagon_pos_indexed_vao)
+        };
+
+    hexagonRS.SetBuffers(hexagonBuffers, 7);
+
+    objectInstancedStorage.push_back(hexagonRS);
+
+    ORS::ORS selectedRS = ORS::ORS(
+                                    new ORS::ArrayData(GL_TRIANGLES, 0 , 54),
+                                    &selected_tile_program
+                                );
+
+    ORS::BufferData* selectedBuffers = new ORS::BufferData[5]{
+            ORS::BufferData(GL_UNIFORM_BUFFER, 0, camera_buffer),
+            ORS::BufferData(GL_UNIFORM_BUFFER, 1, light_buffer),
+            ORS::BufferData(GL_UNIFORM_BUFFER, 2, objects_buffer),
+
+            ORS::BufferData(GL_UNIFORM_BUFFER, 3, visualize_placement),
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 4, color_buffer),
+        };
+    
+    selectedRS.SetBuffers(selectedBuffers, 5);
+
+    objectStorage.push_back(selectedRS);
+
     compile_shaders();
 }
 
@@ -228,30 +267,11 @@ void Application::render() {
     glCullFace(GL_BACK);
 
     // Draw objects
-    glUseProgram(main_program);
 
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, camera_buffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1, light_buffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 2, objects_buffer);
+    objectInstancedStorage[0].object_count = gm_controller->tile_count();
+    objectInstancedStorage[0].render();
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, tile_data);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, tile_position_buffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, color_buffer);
-
-    glBindVertexArray(hexagon_pos_indexed_vao);
-
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 54, gm_controller->tile_count());
-
-    glUseProgram(selected_tile_program);
-
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, camera_buffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1, light_buffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 2, objects_buffer);
-
-    glBindBufferBase(GL_UNIFORM_BUFFER, 3, visualize_placement);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, color_buffer);
-
-    glDrawArrays(GL_TRIANGLES, 0, 54);
+    objectStorage[0].render();
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 3, active_tile_data);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, selected_camera_buffer);
