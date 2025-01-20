@@ -19,6 +19,8 @@
 #include "libraries/my_structures/Timer.hpp"
 #include "libraries/my_structures/QOL.hpp"
 
+#include "ObjectRenderStorage.hpp"
+
 #include "math.h"
 
 #define sqrt3fourth 0.433f // could also be CENTER_DIST / 2 - current solution is faster
@@ -154,6 +156,9 @@ class Application : public PV112Application {
     GLuint visualize_placement = 0;
     Timer<glm::vec4, QOL::SubBufferType>* visualize_movement_transitions = nullptr;
     Timer<float, QOL::SubBufferType>* visualize_rotation_transitions = nullptr;
+
+    std::vector<ORS::ORS> objectStorage = std::vector<ORS::ORS>();
+    std::vector<ORS::ORS_instanced> objectInstancedStorage = std::vector<ORS::ORS_instanced>();
 
     // ----------------------------------------------------------------------------
     // Constructors & Destructors

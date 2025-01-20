@@ -14,6 +14,7 @@ target_sources(${lecture_name} PUBLIC libraries/json/json.hpp)
 target_sources(${lecture_name} PUBLIC libraries/SimplexNoise/SimplexNoise.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/GameController.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/SceneCameras.cpp)
+target_sources(${lecture_name} PUBLIC libraries/my_structures/ObjectRenderStorage.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/MapManager.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/QOL.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/Timer.hpp)
@@ -23,11 +24,18 @@ add_library(GameController STATIC libraries/my_structures/GameController.cpp
                     libraries/my_structures/GameTileData.cpp
                     libraries/my_structures/Randomiser.cpp)
 
+add_library(ObjectRenderStorage STATIC libraries/my_structures/ObjectRenderStorage.cpp)
+
 target_include_directories(GameController PUBLIC libraries/my_structures)
 
 find_package(glm CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
 
 target_link_libraries(GameController PUBLIC glm::glm)
+target_link_libraries(ObjectRenderStorage PUBLIC include geometries)
+target_link_libraries(ObjectRenderStorage PRIVATE glad::glad)
+
 
 set(copy_file_name "data.json")
 
