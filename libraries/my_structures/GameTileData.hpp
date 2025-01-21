@@ -16,7 +16,7 @@ public:
     int8_t rail_exit = 0;
     int8_t target = 0;
     int8_t add_score = 0;
-    double rotation = 0;
+    int rotation = 0;
 
     TerrainTypes flag = NONE;
     TerrainTypes target_type = NONE;

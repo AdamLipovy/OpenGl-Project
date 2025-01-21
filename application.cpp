@@ -144,13 +144,13 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glNamedBufferStorage(visualize_placement, sizeof(ActiveHexTileUBO), active_tile_storage, GL_DYNAMIC_STORAGE_BIT);
 
     QOL::SubBufferType args1 = QOL::SubBufferType((size_t)visualize_placement, (size_t)0, (size_t)sizeof(glm::vec4));
-    QOL::SubBufferType args2 = QOL::SubBufferType((size_t)visualize_placement, (size_t)(sizeof(ActiveHexTileUBO) - sizeof(float)), (size_t)sizeof(ActiveHexTileUBO));
+    QOL::SubBufferType args2 = QOL::SubBufferType((size_t)visualize_placement, (size_t)(sizeof(HexTileUBO)), (size_t)sizeof(float));
 
-    visualize_movement_transitions = new Timer<glm::vec4, QOL::SubBufferType>(300000, animation_functions::ease_in_ease_out, QOL::basicTimer<glm::vec4>, tempVec4, glm::vec4(1.0f));
+    visualize_movement_transitions = new Timer<glm::vec4, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<glm::vec4>, tempVec4, glm::vec4(1.0f));
     visualize_movement_transitions->directChange(args1, QOL::ChangeBufferSubData);
 
-    visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300000, animation_functions::ease_in_ease_out, QOL::basicTimer<float>, 0.0f, 1.0f);
-    // visualize_rotation_transitions->directChange(args2, QOL::ChangeBufferSubData);
+    visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<float>, 0.0f, 1.0f);
+    visualize_rotation_transitions->directChange(args2, QOL::ChangeBufferSubData);
 
 
     ORS::ORS_instanced hexagonRS = ORS::ORS_instanced(
@@ -282,8 +282,10 @@ void Application::render() {
     glm::vec3 mousePos = RayCast();
     
     glm::vec3 tilePosition = glm::vec3(QOL::roundClossest(mousePos.x, SQRTDIST), 0, QOL::roundClossest(mousePos.z, 0.5f));
-    // glm::vec3 tilePosition = gm_controller->VecToSpace(gm_controller->SpaceToVec(mousePos));
-    visualize_movement_transitions->changeCurEnd(glm::vec4(mousePos.x, visualize_height, mousePos.z, 0.0f), true);
+
+    if(gm_controller->optional_map.contains(gm_controller->SpaceToVec(tilePosition))){
+        visualize_movement_transitions->changeCurEnd(glm::vec4(tilePosition.x, -visualize_height, tilePosition.z, 0.0f), true);
+    }
 }
 
 void Application::render_ui() { 
@@ -341,38 +343,31 @@ glm::vec3 Application::RayCast(){
     float temp = camera.get_distance();
 
     aux = dir * temp - camera.look_at * 2 + camera.get_eye_position();
-    return aux;
-
-    if(RCx > width * 0.75) { return glm::vec3(0.0f); }
-    RCx *= 0.75;
-
-    glm::vec4 viewport = glm::vec4(0.0f, 0.0f, height, width * 0.75f);
-    glm::vec3 end = glm::unProject(glm::vec3(RCx, -RCy, 0.05f), camera.get_view_matrix(), camera_ubo.projection, viewport);
-
-    return end;
-
-    glm::vec3 direction = camera.get_eye_position() - end;
-    glm::vec3 normdirection = normalize(direction);
-
-    float mult = (camera.get_eye_position().y / normdirection.y);
-
-    glm::vec3 sub = normdirection * mult;
-
-    aux = camera.get_eye_position() - sub;
-
-    float z = aux.z;
-    float x = aux.x;
-
-    aux.z = x;
-    aux.x = z;
-
-    return aux;
+    aux.y = 0;
+    return -aux;
 }
 
 void Application::on_key_pressed(int key, int scancode, int action, int mods) {
     // Calls default implementation that invokes compile_shaders when 'R key is hit.
+    #ifdef DEBUG
     PV112Application::on_key_pressed(key, scancode, action, mods);
+    #endif
     camera.move(key, action);
+    if(action != GLFW_RELEASE) return;
+    switch(key){
+        int rotate_to;
+        case GLFW_KEY_E:
+            rotate_to = (++gm_controller->selected_tile->rotation) % 6;
+            gm_controller->selected_tile->rotation = rotate_to;
+            visualize_rotation_transitions->changeCurEnd(rotate_to, true);
+            break;
+        case GLFW_KEY_Q:
+            rotate_to = (--gm_controller->selected_tile->rotation + 6) % 6;
+            gm_controller->selected_tile->rotation = rotate_to;
+            visualize_rotation_transitions->changeCurEnd(rotate_to, true);
+            break;
+    }
+    std::cout << "Hello World";
 }
 // MY FUNCTIONS
 
@@ -423,7 +418,7 @@ void Application::tile_setup(glm::ivec3 pos, HexTileUBO* adress){
 
     adress->position = glm::vec4(pos, 1);
 
-    adress->rotation = (int)first_tile->rotation;
+    adress->rotation = first_tile->rotation;
     adress->target = first_tile->target;
 
     adress->triangle1 = first_tile->hex_triangles[0];

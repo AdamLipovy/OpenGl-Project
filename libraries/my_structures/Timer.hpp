@@ -39,10 +39,12 @@ public:
 
     /* @note returns next iteration between start and stop*/
     T next_value(){
+        if(time_left != 0) { --time_left; }
         if (adress == nullptr){
-            return f_change(Timer::clamp(f((time_left--) / max_size)), start, stop);
+            return f_change(Timer::clamp(f((double)(max_size - time_left) / max_size)), start, stop);
         }
-        T temp = f_change(Timer::clamp(f((time_left--) / max_size)), start, stop);
+        T temp = f_change(Timer::clamp(f((double)(max_size - time_left) / max_size)), start, stop);
+
         adress(QOL::FunctionType(temp, args));
         return temp;
     }
@@ -52,8 +54,9 @@ public:
     void reconfig(T(*f_change)(double, T, T)) { this->f_change = f_change; }
     void changeStart(T zero_val) { start = zero_val; }
     void changeEnd(T hundred_val) { stop = hundred_val; }
-    void changeCurEnd(T hundred_val, bool time_reset) {
-        start = f_change(Timer::clamp(f((time_left) / max_size)), start, stop);
+    void changeCurEnd(T hundred_val, bool time_reset = true) {
+        if(stop == hundred_val) { return; }
+        start = f_change(Timer::clamp(f((double)(max_size - time_left) / max_size)), start, stop);
         stop = hundred_val;
         if(time_reset) {time_left = max_size;}
     }

@@ -11,7 +11,7 @@ namespace QOL{
 
     template<typename T>
     T basicTimer(double perc, T start, T end){
-        return (start - end) * (float)perc;
+        return start + (end - start) * (float)perc;
     }
 
     template <typename T, typename args>

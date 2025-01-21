@@ -293,13 +293,15 @@ bool GameController::play(glm::ivec3 position){
     }
 
     game_map.add(position, selected_tile);
+    optional_map.remove(position);
     if (selected_tile->target != 0){
         target_data[targets_active] = std::tuple<GameTileData*, glm::ivec3>(selected_tile, position);
         targets_active++;
     }
     for (size_t i = 0; i < 6; i++)
     {
-        optional_map.add(position + OFFSETMAP[i], nullptr);
+        glm::ivec3 new_pos = position + OFFSETMAP[i];
+        if(!game_map.contains(new_pos)) optional_map.add(position + OFFSETMAP[i], nullptr);
     }
     
     target_check();

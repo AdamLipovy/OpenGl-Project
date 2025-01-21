@@ -58,6 +58,8 @@ void main()
 
     gl_Position = camera.projection * camera.view * object.model_matrix * vec4(position + hexPos[gl_InstanceID], 1.0);
 	instance = gl_InstanceID;
-	// TODO add normals and uv
 	triangle = gl_VertexID / 3;
+	if(gl_VertexID < 18){
+		triangle = (triangle + hexData[instance].data1.x) % 6;
+	}
 }

@@ -7,6 +7,9 @@ namespace QOL{
         double multOf = val / mult;
         double rest = multOf - (int)multOf;
 
+        if(rest < 0) {
+            return mult * ((int)multOf - (rest < -0.5 ? 1 : 0));
+        }
         return mult * ((int)multOf + (rest > 0.5 ? 1 : 0));
     }
 }
