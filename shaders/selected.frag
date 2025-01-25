@@ -35,6 +35,10 @@ layout(binding = 4, std430) buffer Colors {
     vec4 color_map[];
 };
 
+layout(binding = 5, std140) buffer positionMatrix{
+	mat4 posMat; 
+};
+
 layout(location = 0) in vec3 fs_position;
 layout(location = 1) in vec3 fs_normal;
 layout(location = 2) flat in int triangle;

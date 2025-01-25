@@ -2,6 +2,12 @@
 #include "QOL.hpp"
 
 namespace QOL{
+    float pythDist(glm::vec3 a, glm::vec3 b){
+        float one = a.x - b.x;
+        float two = a.z - b.z;
+        return (one * one + two * two);
+    }
+
     double roundClossest(double val, double mult){
 
         double multOf = val / mult;
@@ -11,6 +17,15 @@ namespace QOL{
             return mult * ((int)multOf - (rest < -0.5 ? 1 : 0));
         }
         return mult * ((int)multOf + (rest > 0.5 ? 1 : 0));
+    }
+
+    // TODO fix it somehow
+    float hexagonRotation(double perc, float start, float end){
+        if(start - end > 3.0f){
+            start += 6;
+            return start + (end - start) * (float)perc;
+        }
+        return start + (end - start) * (float)perc;
     }
 }
 

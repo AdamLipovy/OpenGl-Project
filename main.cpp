@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> arguments(argv, argv + argc);
 
     ImGuiManager manager;
-    manager.init(initial_width, initial_height, "Romantic dorf spinoff", 4, 5);
+    manager.init(initial_width, initial_height, "Romantic village", 4, 5);
     if(!manager.is_fail()) 
     {
         // Note that the application has to be created after the manager is initialized.

@@ -90,7 +90,7 @@ void GameController::shuffle(std::vector<T*>* list)
 
 GameController::GameController()
 {
-    srand(time(0));
+    srand((unsigned int)time(0));
     if (!load())
     {
         perror("[ERROR] Couldn't load json data - terminating\n");
@@ -198,6 +198,10 @@ void GameController::next_turn(){
         }
         return;
     } else if(status == NORMAL) {
+        if(normal_tiles_left == 0){
+            status = END;
+            return;
+        }
         selected_tile = normal_tiles[normal_tiles_count - normal_tiles_left];
         normal_tiles_left--;
         return;
@@ -279,7 +283,7 @@ void GameController::reset()
     optional_map.add(glm::ivec3(0), nullptr);
 }
 
-size_t GameController::tile_count(){
+GLsizei GameController::tile_count(){
     return game_map.get_size();
 }
 
@@ -328,7 +332,6 @@ glm::ivec3 GameController::SpaceToVec(glm::vec3 vec){
 
     aux = glm::ivec3(0);
 
-    std::cout << std::format("{}, {}\n", x, z);
     if(abs(x % 2) != abs(z % 2)) { 
         return aux;
     }

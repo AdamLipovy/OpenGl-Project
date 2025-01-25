@@ -26,6 +26,8 @@ add_library(GameController STATIC libraries/my_structures/GameController.cpp
 
 add_library(ObjectRenderStorage STATIC libraries/my_structures/ObjectRenderStorage.cpp)
 
+add_library(QualityOfLife STATIC libraries/my_structures/QOL.cpp)
+
 target_include_directories(GameController PUBLIC libraries/my_structures)
 
 find_package(glm CONFIG REQUIRED)
@@ -33,6 +35,10 @@ find_package(glad CONFIG REQUIRED)
 find_package(tinyobjloader CONFIG REQUIRED)
 
 target_link_libraries(GameController PUBLIC glm::glm)
+target_link_libraries(GameController PRIVATE glad::glad)
+
+target_link_libraries(QualityOfLife PRIVATE glad::glad)
+
 target_link_libraries(ObjectRenderStorage PUBLIC include geometries)
 target_link_libraries(ObjectRenderStorage PRIVATE glad::glad)
 

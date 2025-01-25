@@ -6,6 +6,8 @@
 #include <vector>
 #include <fstream>
 
+#include "glad/glad.h"
+
 #include "Enums.hpp"
 #include "GameTileData.hpp"
 #include "MapManager.hpp"
@@ -105,7 +107,7 @@ public:
     /* @note resets whole game map*/
     void reset();
 
-    size_t tile_count();
+    GLsizei tile_count();
 
     bool play(glm::ivec3);
     bool play(glm::vec3);

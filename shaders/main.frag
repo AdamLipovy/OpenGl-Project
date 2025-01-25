@@ -45,23 +45,21 @@ layout(binding = 5, std430) buffer Colors {
 
 layout(location = 0) in vec3 fs_position;
 layout(location = 1) in vec3 fs_normal;
-layout(location = 3) flat in int instance;
-layout(location = 4) flat in int triangle;
+layout(location = 2) flat in int instance;
+layout(location = 3) flat in int triangle;
+layout(location = 4) in float increaseMap;
 
 layout(location = 0) out vec4 final_color;
+
+
 
 void main() {
 
     // return;
 
     vec3 light_vector = light.position.xyz - fs_position * light.position.w;
-    // vec3 L = normalize(light_vector);
     vec3 N = normalize(fs_normal);
     vec3 E = normalize(camera.position - fs_position);
-    // vec3 H = normalize(L + E);
-
-    // float NdotL = max(dot(N, L), 0.0);
-    // float NdotH = max(dot(N, H), 0.0001);
 
     vec3 ambient;
 

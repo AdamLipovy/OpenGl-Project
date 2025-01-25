@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <algorithm>
 #include "QOL.hpp"
 
 template <typename T, typename Args>
@@ -28,8 +29,8 @@ public:
     /* @param func function that takes size_t and returns double - percentige of progress in transition should be in range (0, 100)*/
     /* @param zero_val starting point*/
     /* @param one_val end point*/
-    Timer(size_t frames_till_change, double(*func)(float), T(*f_change)(double, T, T), T zero_val, T hundred_val){
-        time_left = frames_till_change;
+    Timer(size_t frames_till_change, double(*func)(float), T(*f_change)(double, T, T), T zero_val, T hundred_val, int delay = 0){
+        time_left = frames_till_change + delay;
         max_size = frames_till_change;
         f = func;
         this->f_change = f_change;
@@ -41,9 +42,9 @@ public:
     T next_value(){
         if(time_left != 0) { --time_left; }
         if (adress == nullptr){
-            return f_change(Timer::clamp(f((double)(max_size - time_left) / max_size)), start, stop);
+            return f_change(Timer::clamp(f(std::max((double)(max_size - time_left), 0.0) / max_size)), start, stop);
         }
-        T temp = f_change(Timer::clamp(f((double)(max_size - time_left) / max_size)), start, stop);
+        T temp = f_change(Timer::clamp(f(std::max((double)(max_size - time_left), 0.0) / max_size)), start, stop);
 
         adress(QOL::FunctionType(temp, args));
         return temp;
@@ -56,7 +57,7 @@ public:
     void changeEnd(T hundred_val) { stop = hundred_val; }
     void changeCurEnd(T hundred_val, bool time_reset = true) {
         if(stop == hundred_val) { return; }
-        start = f_change(Timer::clamp(f((double)(max_size - time_left) / max_size)), start, stop);
+        start = f_change(Timer::clamp(f(std::max((double)(max_size - time_left), 0.0) / max_size)), start, stop);
         stop = hundred_val;
         if(time_reset) {time_left = max_size;}
     }

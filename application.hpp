@@ -12,7 +12,10 @@
 #include "pv112_application.hpp"
 #include "sphere.hpp"
 #include "teapot.hpp"
+#include <string>
 #include <vector>
+#include <list>
+#include <map>
 
 #include "libraries/my_structures/GameController.hpp"
 #include "libraries/my_structures/SceneCameras.hpp"
@@ -67,8 +70,8 @@ public:
 
     glm::vec4 river1;
     glm::vec4 river2;
-    glm::vec4 river3;
-    glm::vec4 river4;
+    glm::vec4 rail1;
+    glm::vec4 rail2;
 };
 
 struct ActiveHexTileUBO : public HexTileUBO{
@@ -112,7 +115,7 @@ class Application : public PV112Application {
     // Main program
     GLuint main_program;
     GLuint selected_tile_program;
-    // TODO: feel free to add as many as you need/like
+    GLuint textured_objects_program;
 
     // List of geometries used in the project
     std::vector<std::shared_ptr<Geometry>> geometries;
@@ -153,12 +156,24 @@ class Application : public PV112Application {
     GLuint active_tile_data = 0;
     ActiveHexTileUBO* active_tile_storage;
 
+    GLuint selected_object_buffer = 0;
+    ObjectUBO* selected_object_ubo;
+
+    GLuint* object_buffers = nullptr;
+    int objects_allocated = 0;
+
     GLuint visualize_placement = 0;
     Timer<glm::vec4, QOL::SubBufferType>* visualize_movement_transitions = nullptr;
     Timer<float, QOL::SubBufferType>* visualize_rotation_transitions = nullptr;
 
     std::vector<ORS::ORS> objectStorage = std::vector<ORS::ORS>();
     std::vector<ORS::ORS_instanced> objectInstancedStorage = std::vector<ORS::ORS_instanced>();
+
+    std::list<Timer<void*, QOL::SubBufferType>* >* timers = new std::list<Timer<void*, QOL::SubBufferType> *>();
+
+    // details
+    
+    std::map<int, std::vector<ORS::ORS_instanced>*>* details = nullptr;
 
     // ----------------------------------------------------------------------------
     // Constructors & Destructors
@@ -221,6 +236,9 @@ private:
 
     void tile_setup(glm::ivec3 pos, HexTileUBO* adress);
     void tile_setup(ActiveHexTileUBO* adress);
+    void add_details(HexTileUBO* adress);
+    void CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size);
+    ORS::ORS_instanced ORSSetup(std::filesystem::path name, size_t index);
 };
 
 const glm::vec4 terrain_color[] = {

@@ -44,9 +44,6 @@ layout(location = 2) out int triangle;
 
 void main()
 {
-	// vec3 rotated = vec3(position.x * cos(data.rotation / 3) + position.z * sin(data.rotation / 3), 
-	// 					position.y,
-	// 					position.z * cos(data.rotation / 3) + position.x * sin(data.rotation / 3));
 	fs_position = vec3(object.model_matrix * vec4(position + data.position.xyz, 1.0));
 	fs_normal = transpose(inverse(mat3(object.model_matrix))) * normal;
 
