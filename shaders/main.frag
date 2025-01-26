@@ -112,7 +112,6 @@ void main() {
         } else {
             color = (attenuation / 1000.0) * ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular;
         }
-        color = (diffuse + ambient + specular) * objColor;
 
         color_sum += color;
     }
