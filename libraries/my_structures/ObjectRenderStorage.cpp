@@ -10,6 +10,14 @@ namespace ORS{
                     glBindVertexArray(*(curr.adress));
                     break;
 
+                case GL_MAP1_INDEX:
+                    glUniform1i(glGetUniformLocation(*(program.value), "light_count"), *(curr.adress));
+                    break;
+                
+                case GL_SHADER_STORAGE_BUFFER:
+                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, curr.binding, *(curr.adress));
+                    break;
+
                 default:
                     glBindBufferBase(curr.type, curr.binding, *(curr.adress));
             }
@@ -34,7 +42,9 @@ namespace ORS{
     void ORS::AddBuffer(GLsizei type , GLsizei binding, GLuint* adress){buffers.push_back(BufferData(type, binding, adress));}
     void ORS::AddBuffer(BufferData* newBuff, size_t buffCount){
         for (size_t i = 0; i < buffCount; i++){
-            buffers.push_back(newBuff[i]);
+            AddBuffer(newBuff[i]);
+            std::cout << i;
+            std::cout << " done\n";
         }
     }
 
@@ -87,6 +97,11 @@ namespace ORS{
         dynamic_buffer.value.allocate_by = allocate_by;
     }
 
+    GLuint* ORS_instanced::GetDynamicBufferAdress(){
+        return dynamic_buffer.value.buffer.adress;
+    }
+
+
     void ORS_instanced::render(){
         if(program.toggle) glUseProgram(*(program.value));
         bind();
@@ -98,10 +113,6 @@ namespace ORS{
             if(program.toggle) {
                 glUniform1i(glGetUniformLocation(*(program.value), "has_texture"), true);
             }
-            std::cout << texture.value.adress;
-            std::cout << ", ";
-            std::cout << texture.value.texture;
-            std::cout << "\n";
             glBindTextureUnit(texture.value.adress, texture.value.texture);
         }
         if(drawArrays.toggle){

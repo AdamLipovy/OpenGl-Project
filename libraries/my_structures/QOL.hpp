@@ -28,11 +28,27 @@ namespace QOL{
         args args;
     };
 
+    struct RenderObject {
+        glm::mat4 model_matrix;
+        glm::vec4 ambient_color;
+        glm::vec4 diffuse_color;
+        glm::vec4 specular_color;
+    };
+
     struct SubBufferType{
         GLuint buffer;
         size_t index;
         size_t size;
     };
+
+    struct MatChange{
+        float rotate;
+        glm::vec3 rotate_around;
+        glm::vec3 position;
+        glm::vec3 size;
+    };
+
+    MatChange matTransition(double perc, MatChange start, MatChange end);
 
     template <typename T>
     void ChangeBufferSubData(FunctionType<T, SubBufferType>);
@@ -40,6 +56,7 @@ namespace QOL{
     void ChangeMatrixSubData(FunctionType<glm::mat4, SubBufferType>);
     void ChangeMatrixPositionSubData(FunctionType<glm::vec4, SubBufferType> data);
     void ChangeMatrixRotationSubData(FunctionType<float, SubBufferType>);
+    void CreateMatrix(FunctionType<MatChange, SubBufferType> data);
 }
 
 namespace animation_functions{

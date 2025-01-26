@@ -27,6 +27,15 @@ namespace QOL{
         }
         return start + (end - start) * (float)perc;
     }
+
+    MatChange matTransition(double perc, MatChange start, MatChange end){
+        MatChange aux = MatChange();
+        aux.position = basicTimer<glm::vec3>(perc, start.position, end.position);
+        aux.rotate = basicTimer<float>(perc, start.rotate, end.rotate);
+        aux.rotate_around = basicTimer<glm::vec3>(perc, start.rotate_around, end.rotate_around);
+        aux.size = basicTimer<glm::vec3>(perc, start.size, end.size);
+        return aux;
+    }
 }
 
 namespace animation_functions{

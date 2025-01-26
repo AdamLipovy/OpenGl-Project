@@ -63,7 +63,7 @@ void GameTileData::setup(tile_json_data data)
     water_exit = data["water"];
     rail_exit = data["rail"];
 
-    target = data["target"];
+    target = (rand() % 3) + 3;
     target_type = data["target_type"];
     flag = data["flag"];
 

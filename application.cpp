@@ -13,7 +13,7 @@ double temp1 (float x){return (double)x;}
 
 float temp2 (double x, float a, float b) {return a;}
 
-GLuint load_texture_2d(const std::filesystem::path filename) {
+GLuint load_texture_2d(const std::filesystem::path filename, int* widthptr = nullptr, int *heightptr = nullptr) {
     int width, height, channels;
     unsigned char* data = stbi_load(filename.generic_string().data(), &width, &height, &channels, 4);
 
@@ -36,6 +36,12 @@ GLuint load_texture_2d(const std::filesystem::path filename) {
     glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    if(widthptr != nullptr)
+        *widthptr = width;
+
+    if(heightptr != nullptr)
+        *heightptr = width;
+
     return texture;
 }
 
@@ -51,6 +57,19 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     hex_tile_storage = new HexTileUBO[gm_controller->tiles_count];
     position_storage = new glm::vec4[gm_controller->tiles_count];
     active_tile_storage = new ActiveHexTileUBO();
+
+    qTexture = ImageData(0, 0, 0);
+    qTexture.Id = load_texture_2d(images_path / "keyboard_q_outline.png", &(qTexture.image_width), &(qTexture.image_height));
+    wTexture = ImageData(0, 0, 0);
+    wTexture.Id = load_texture_2d(images_path / "keyboard_w_outline.png", &(wTexture.image_width), &(wTexture.image_height));
+    eTexture = ImageData(0, 0, 0);
+    eTexture.Id = load_texture_2d(images_path / "keyboard_e_outline.png", &(eTexture.image_width), &(eTexture.image_height));
+    aTexture = ImageData(0, 0, 0);
+    aTexture.Id = load_texture_2d(images_path / "keyboard_a_outline.png", &(aTexture.image_width), &(aTexture.image_height));
+    sTexture = ImageData(0, 0, 0);
+    sTexture.Id = load_texture_2d(images_path / "keyboard_s_outline.png", &(sTexture.image_width), &(sTexture.image_height));
+    dTexture = ImageData(0, 0, 0);
+    dTexture.Id = load_texture_2d(images_path / "keyboard_d_outline.png", &(dTexture.image_width), &(dTexture.image_height));
 
     // Initializing buffers
     glCreateBuffers(1, &tile_data);
@@ -72,13 +91,13 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glVertexArrayVertexBuffer(hexagon_pos_indexed_vao, 0, hexagon_vertexes, 0, 3 * sizeof(float));
 
     glEnableVertexArrayAttrib(hexagon_pos_indexed_vao, 0);
-    glVertexArrayAttribFormat(hexagon_pos_indexed_vao, 0, 3, GL_FLOAT, GL_TRUE, 0);
+    glVertexArrayAttribFormat(hexagon_pos_indexed_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(hexagon_pos_indexed_vao, 0, 0);
 
     glVertexArrayVertexBuffer(hexagon_pos_indexed_vao, 1, hexagon_normal_vertexes, 0, 3 * sizeof(float));
 
     glEnableVertexArrayAttrib(hexagon_pos_indexed_vao, 1);
-    glVertexArrayAttribFormat(hexagon_pos_indexed_vao, 1, 3, GL_FLOAT, GL_TRUE, 0);
+    glVertexArrayAttribFormat(hexagon_pos_indexed_vao, 1, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(hexagon_pos_indexed_vao, 1, 1);
 
     // --------------------------------------------------------------------------
@@ -88,15 +107,15 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     camera_ubo.projection = glm::perspective(glm::radians(45.0f), (float(width) * 0.75f) / float(height), 0.01f, 100.0f);
     camera_ubo.view = glm::lookAt(camera.get_eye_position(), camera.look_at, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    light_ubo.position = glm::vec4(0.0f, 3.0f, 0.0f, 1.0f);
-    light_ubo.ambient_color = glm::vec4(0.2f);
-    light_ubo.diffuse_color = glm::vec4(0.5f);
-    light_ubo.specular_color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    lights.push_back({.position = glm::vec4(0.0, 1.45, 0.75, 1.0),
+                                 .ambient_color = glm::vec4(0.0f),
+                                 .diffuse_color = glm::vec4(1.0f),
+                                 .specular_color = glm::vec4(0.0f)});
 
     objects_ubos.push_back({.model_matrix = glm::mat4(1.0f),
                             .ambient_color = glm::vec4(0.0f),
                             .diffuse_color = glm::vec4(1.0f),
-                            .specular_color = glm::vec4(0.5f)});
+                            .specular_color = glm::vec4(0.0f)});
 
     // same for second camera
 
@@ -118,7 +137,7 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glNamedBufferStorage(camera_buffer, sizeof(CameraUBO), &camera_ubo, GL_DYNAMIC_STORAGE_BIT);
 
     glCreateBuffers(1, &light_buffer);
-    glNamedBufferStorage(light_buffer, sizeof(LightUBO), &light_ubo, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(light_buffer, sizeof(LightUBO) * 100, lights.data(), GL_DYNAMIC_STORAGE_BIT);
 
     glCreateBuffers(1, &objects_buffer);
     glNamedBufferStorage(objects_buffer, sizeof(ObjectUBO), objects_ubos.data(), GL_DYNAMIC_STORAGE_BIT);
@@ -165,7 +184,7 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
                                         &main_program
                                         );
 
-    ORS::BufferData* hexagonBuffers = new ORS::BufferData[7]{
+    ORS::BufferData* hexagonBuffers = new ORS::BufferData[8]{
             ORS::BufferData(GL_UNIFORM_BUFFER, 0, &camera_buffer),
             ORS::BufferData(GL_UNIFORM_BUFFER, 1, &light_buffer),
             ORS::BufferData(GL_UNIFORM_BUFFER, 2, &objects_buffer),
@@ -173,10 +192,11 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 3, &tile_data),
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 4, &tile_position_buffer),
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 5, &color_buffer),
-            ORS::BufferData(GL_VERTEX_ARRAY, 0, &hexagon_pos_indexed_vao)
+            ORS::BufferData(GL_VERTEX_ARRAY, 0, &hexagon_pos_indexed_vao),
+            ORS::BufferData(GL_MAP1_INDEX, 6, &lights_count)
         };
 
-    hexagonRS.SetBuffers(hexagonBuffers, 7);
+    hexagonRS.SetBuffers(hexagonBuffers, 8);
 
     objectInstancedStorage.push_back(hexagonRS);
 
@@ -185,16 +205,18 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
                                     &selected_tile_program
                                 );
 
-    ORS::BufferData* selectedBuffers = new ORS::BufferData[5]{
+    ORS::BufferData* selectedBuffers = new ORS::BufferData[7]{
             ORS::BufferData(GL_UNIFORM_BUFFER, 0, &camera_buffer),
             ORS::BufferData(GL_UNIFORM_BUFFER, 1, &light_buffer),
             ORS::BufferData(GL_UNIFORM_BUFFER, 2, &selected_object_buffer),
+            ORS::BufferData(GL_MAP1_INDEX, 5, &lights_count),         // COLOR COUNT LINK
 
             ORS::BufferData(GL_UNIFORM_BUFFER, 3, &visualize_placement),
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 4, &color_buffer),
+            ORS::BufferData(GL_VERTEX_ARRAY, 0, &hexagon_pos_indexed_vao),
         };
     
-    selectedRS.SetBuffers(selectedBuffers, 5);
+    selectedRS.SetBuffers(selectedBuffers, 7);
 
     objectStorage.push_back(selectedRS);
 
@@ -202,12 +224,22 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
 
     details = new std::map<int, std::vector<ORS::ORS_instanced>*>();
 
-    const auto [i, success] = details->insert({(int)CITY, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)NONE, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)MEADOW, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)FIELD, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)FOREST, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)CITY, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)RAIL, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)WATER, new std::vector<ORS::ORS_instanced>()});
 
-    std::filesystem::path adresses[2] = {"building-sample-house-b", "building-sample-tower-a"};
-    int adresses_areas[2] = {CITY, CITY};
+    std::filesystem::path adresses[5] = {"building-sample-house-b",
+                                            "building-sample-tower-a",
+                                            "campfire",
+                                            "target_tile",
+                                            "tree_cone_tall"};
+    int adresses_areas[5] = {CITY, CITY, CITY, NONE, FOREST};
 
-    CreateObjectsORS(adresses, adresses_areas, 2);
+    CreateObjectsORS(adresses, adresses_areas, 5);
 
     compile_shaders();
 }
@@ -252,15 +284,28 @@ void Application::compile_shaders() {
 void Application::update(float delta) {}
 
 void Application::render() {
-    //animations
-
     glm::vec4 selected_pos = visualize_movement_transitions->next_value();
     float selected_rotate_by = visualize_rotation_transitions->next_value();
+
+    std::for_each(timers->begin(), timers->end(), [](Timer<QOL::MatChange, QOL::SubBufferType>* clock) {clock->next_value();} );
+    bool resize = false;
+    for(int i = 0; i < timers->size(); i++){
+        if(!(*timers)[i]->is_active()){
+            timers->erase(timers->begin() + i);
+            resize = true;
+        }
+    }
+
+    if(resize) timers->shrink_to_fit();
+
+    std::for_each(timers->begin(), timers->end(), [](Timer<QOL::MatChange, QOL::SubBufferType>* clock) {  ;} );
 
     glm::mat4 selected_tile_mat = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(selected_pos)), selected_rotate_by * 3.14f / 3.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 active_tile_mat = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)), selected_rotate_by * 3.14f / 3.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
     glNamedBufferSubData((size_t)selected_object_buffer, (size_t)0, (size_t)sizeof(glm::mat4), &selected_tile_mat);
+
+    lights_count = lights.size();
 
     // rest
     camera_ubo.position = glm::vec4(camera.get_eye_position(), 1.0f);
@@ -276,6 +321,7 @@ void Application::render() {
     // --------------------------------------------------------------------------
     // Draw scene
     // --------------------------------------------------------------------------
+
     glViewport(0, 0, (GLsizei)(width * 0.75f), (GLsizei)height);
 
     // Clear
@@ -293,7 +339,11 @@ void Application::render() {
     glCullFace(GL_BACK);
 
     // Draw objects
-    (*(*details)[CITY])[0].render();
+    for(int i = 0; i < 7; i++){
+        for(int o = 0; o < (*(*details)[i]).size(); o++){
+            (*(*details)[i])[o].render();
+        }
+    }
 
     objectInstancedStorage[0].object_count = gm_controller->tile_count();
     objectInstancedStorage[0].render();
@@ -321,6 +371,24 @@ void Application::render_ui() {
     ImGui::SetWindowSize(ImVec2(0.21f * width, 0.71f * height));
     ImGui::SetWindowPos(ImVec2(0.77f * width, 0.27f * height));
     ImGui::Text("current score: %d", gm_controller->get_score());
+    if(ImGui::ImageButton((ImTextureID)(intptr_t)(qTexture.Id), ImVec2(qTexture.image_width, qTexture.image_height),
+                                ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
+                                { on_key_pressed(GLFW_KEY_Q, 0, GLFW_RELEASE, 0); }
+    if(ImGui::ImageButton((ImTextureID)(intptr_t)(wTexture.Id), ImVec2(wTexture.image_width, wTexture.image_height),
+                                ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
+                                { on_key_pressed(GLFW_KEY_W, 0, GLFW_RELEASE, 0); }
+    if(ImGui::ImageButton((ImTextureID)(intptr_t)(eTexture.Id), ImVec2(eTexture.image_width, eTexture.image_height),
+                                ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
+                                { on_key_pressed(GLFW_KEY_E, 0, GLFW_RELEASE, 0); }
+    if(ImGui::ImageButton((ImTextureID)(intptr_t)(aTexture.Id), ImVec2(aTexture.image_width, aTexture.image_height),
+                                ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
+                                { on_key_pressed(GLFW_KEY_A, 0, GLFW_RELEASE, 0); }
+    if(ImGui::ImageButton((ImTextureID)(intptr_t)(sTexture.Id), ImVec2(sTexture.image_width, sTexture.image_height),
+                                ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
+                                { on_key_pressed(GLFW_KEY_S, 0, GLFW_RELEASE, 0); }
+    if(ImGui::ImageButton((ImTextureID)(intptr_t)(dTexture.Id), ImVec2(dTexture.image_width, dTexture.image_height),
+                                ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
+                                { on_key_pressed(GLFW_KEY_D, 0, GLFW_RELEASE, 0); }
     ImGui::End();
 }
 
@@ -338,7 +406,7 @@ void Application::on_mouse_move(double x, double y) {
     selected_camera.on_mouse_move(x, y);
 }
 void Application::on_mouse_button(int button, int action, int mods) {
-    if (action == GLFW_RELEASE) {
+    if (action == GLFW_RELEASE && button == GLFW_MOUSE_BUTTON_LEFT) {
         AddTile();
     }
     camera.on_mouse_button(button, action, mods);
@@ -373,9 +441,7 @@ glm::vec3 Application::RayCast(){
 
 void Application::on_key_pressed(int key, int scancode, int action, int mods) {
     // Calls default implementation that invokes compile_shaders when 'R key is hit.
-    #ifdef DEBUG
     PV112Application::on_key_pressed(key, scancode, action, mods);
-    #endif
     camera.move(key, action);
     if(action != GLFW_RELEASE) return;
     switch(key){
@@ -420,6 +486,7 @@ void Application::AddTile(){
         HexTileUBO tileUBO = HexTileUBO();
 
         tile_setup(vectorizedPos, &tileUBO);
+        add_details(tileUBO, clossest);
         glm::vec4 tilePosVec4 = glm::vec4(clossest, 0.0f);
         glNamedBufferSubData(tile_position_buffer, index * sizeof(glm::vec4), sizeof(glm::vec4), &tilePosVec4);
         glNamedBufferSubData(tile_data, index * sizeof(HexTileUBO), sizeof(HexTileUBO), &tileUBO);
@@ -429,6 +496,8 @@ void Application::AddTile(){
 
         glNamedBufferSubData(active_tile_data, 0, sizeof(HexTileUBO), &selectedTileUBO);
         glNamedBufferSubData(visualize_placement, 0, sizeof(HexTileUBO), &selectedTileUBO);
+
+        visualize_rotation_transitions->changeCurEnd(0, true);
     }
 }
 
@@ -480,14 +549,79 @@ void Application::tile_setup(ActiveHexTileUBO* adress){
     adress->rail2 = glm::vec4(0);
 }
 
-void Application::add_details(HexTileUBO* adress){
+void Application::add_details(HexTileUBO adress, glm::vec3 position){
 
+    int hex_data[6] = {adress.triangle1, adress.triangle2, adress.triangle3, adress.triangle4, adress.triangle5, adress.triangle6};
+    int delay = 300;
+    for (size_t i = 0; i < 6; i++)
+    {
+        switch (hex_data[(i + adress.rotation) % 6])
+        {
+        case CITY:
+            glm::vec3 tile_offset_pos = gm_controller->VecToSpace(OFFSETMAP[i]) / 4;
+            for (size_t x = 0; x < 3; x++)
+            {
+                glm::vec3 offset_pos = glm::vec3((rand() % 150) / 1000.0f, 0.0f, (rand() % 150) / 1000.0f);
+                Timer<QOL::MatChange, QOL::SubBufferType>* temp = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
+                                                                    animation_functions::ease_in_ease_out, QOL::matTransition,
+                                                                    QOL::MatChange(0, glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position, glm::vec3(0.01f)),
+                                                                    QOL::MatChange((rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position + glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.2f)),
+                                                                    delay);
+                GLsizei offset = (*(*details)[CITY])[0].object_count;
+                GLuint* buffer = (*(*details)[CITY])[0].GetDynamicBufferAdress();
+                (*(*details)[CITY])[0].AddInstance();
 
-    Timer<glm::mat4, QOL::SubBufferType>* temp = new Timer<glm::mat4, QOL::SubBufferType>(150, animation_functions::ease_in_ease_out, QOL::basicTimer, glm::mat4(0.0f), glm::mat4(1.0f), 40);
+                temp->directChange(QOL::SubBufferType(*buffer, offset * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
+                timers->push_back(temp);
+
+                delay += 300;
+            }
+
+            glm::vec3 offset_pos = glm::vec3((rand() % 150) / 1000.0f, 0.0f, (rand() % 150) / 1000.0f);
+            Timer<QOL::MatChange, QOL::SubBufferType>* temp3 = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
+                                                                animation_functions::ease_in_ease_out, QOL::matTransition,
+                                                                QOL::MatChange(0, glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position, glm::vec3(0.01f)),
+                                                                QOL::MatChange((rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position + glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.3f)),
+                                                                delay);
+            GLsizei offset3 = (*(*details)[CITY])[1].object_count;
+            GLuint* buffer3 = (*(*details)[CITY])[1].GetDynamicBufferAdress();
+            (*(*details)[CITY])[1].AddInstance();
+
+            temp3->directChange(QOL::SubBufferType(*buffer3, offset3 * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
+            timers->push_back(temp3);
+
+            delay += 300;
+
+            // glm::vec3 offset_pos = glm::vec3(0.0f);
+            offset_pos = glm::vec3((rand() % 150) / 1000.0f, 0.0f, (rand() % 150) / 500.0f);
+            Timer<QOL::MatChange, QOL::SubBufferType>* campfire_timer = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
+                                                                animation_functions::ease_in_ease_out, QOL::matTransition,
+                                                                QOL::MatChange(0, glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position, glm::vec3(0.01f)),
+                                                                QOL::MatChange((rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position + glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.3f)),
+                                                                delay);
+            GLsizei campfire_count = (*(*details)[CITY])[2].object_count;
+            GLuint* campfire_buffer = (*(*details)[CITY])[2].GetDynamicBufferAdress();
+            (*(*details)[CITY])[2].AddInstance();
+
+            LightUBO newLight = LightUBO{.position = glm::vec4(offset_pos + tile_offset_pos + position, 1.0f),
+                                        .ambient_color = glm::vec4(0.0f),
+                                        .diffuse_color = glm::vec4(0.23f, 0.23f, 0.0f, 1.0f),
+                                        .specular_color = glm::vec4(0.0f)};
+
+            glNamedBufferSubData(light_buffer, lights_count * sizeof(LightUBO), sizeof(LightUBO), &newLight);
+
+            lights_count++;
+
+            lights.push_back(newLight);
+
+            campfire_timer->directChange(QOL::SubBufferType(*campfire_buffer, campfire_count * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
+            timers->push_back(campfire_timer);
+
+            delay += 100;
+            break;
+        }
+    }
     
-    // TODO fix subbuffer values
-    temp->directChange(QOL::SubBufferType(1, 2, 3), QOL::ChangeMatrixSubData);
-    timers->push_back((Timer<void*, QOL::SubBufferType>*) temp);
 }
 
 void Application::CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size){
@@ -496,7 +630,9 @@ void Application::CreateObjectsORS(std::filesystem::path* files, int* areas, GLs
     objects_allocated = size;
     for (size_t i = 0; i < size; i++)
     {
-        (*details)[areas[i]]->push_back(ORSSetup(files[i], i));
+        if(areas[i] != NONE){
+            (*details)[areas[i]]->push_back(ORSSetup(files[i], i));
+        }
     }
 }
 
@@ -509,32 +645,62 @@ ORS::ORS_instanced Application::ORSSetup(std::filesystem::path name, size_t inde
     ORS::TextureData object_texture = ORS::TextureData(3, load_texture_2d(object_path));
     ORS::ORS_instanced object_instancer = ORS::ORS_instanced(&object_geometry, &object_texture, &textured_objects_program);
 
-    ORS::BufferData* object_buffer_data = new ORS::BufferData[2]{
+    ORS::BufferData* object_buffer_data = new ORS::BufferData[3]{
             ORS::BufferData(GL_UNIFORM_BUFFER, 0, &camera_buffer),
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 1, &light_buffer),
+            ORS::BufferData(GL_MAP1_INDEX, 4, &lights_count),
         };
 
-    ObjectUBO object_UBO = ObjectUBO {.model_matrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.15, 0.0)), glm::vec3(0.1f)),
+    ObjectUBO object_UBO = ObjectUBO {.model_matrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 0.0)), glm::vec3(0.3f)),
                                                 .ambient_color = glm::vec4(0.0f),
                                                 .diffuse_color = glm::vec4(1.0f),
                                                 .specular_color = glm::vec4(0.5f)};
 
-    object_instancer.SetBuffers(object_buffer_data, 2);
+    object_instancer.SetBuffers(object_buffer_data, 3);
 
     if(!glIsBuffer(object_buffers[index])){
         assert(false);
     }
 
-    glNamedBufferStorage(object_buffers[index], sizeof(ObjectUBO) * 10, &object_UBO, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(object_buffers[index], sizeof(ObjectUBO) * 100, &object_UBO, GL_UNIFORM_BUFFER);
+
+    std::cout << "allocated 100 object buffer";
 
     ORS::BufferData object_dynamic_buffer_data = ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, &(object_buffers[index]));
-    object_instancer.object_count = 1;
+    object_instancer.object_count = 0;
     object_instancer.AddDynamicBuffer(&object_dynamic_buffer_data, 10);
 
-    std::cout << object_texture.adress;
-    std::cout << ", ";
-    std::cout << object_texture.texture;
-    std::cout << "\n";
+    return object_instancer;
+}
+
+ORS::ORS_instanced Application::ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint buffer){
+    Geometry object_geometry = Geometry::from_file(object);
+    ORS::TextureData object_texture = ORS::TextureData(3, load_texture_2d(texture));
+    ORS::ORS_instanced object_instancer = ORS::ORS_instanced(&object_geometry, &object_texture, &textured_objects_program);
+
+    ORS::BufferData* object_buffer_data = new ORS::BufferData[3]{
+            ORS::BufferData(GL_UNIFORM_BUFFER, 0, &camera_buffer),
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 1, &light_buffer),
+            ORS::BufferData(GL_MAP1_INDEX, 4, &lights_count),
+        };
+
+    ObjectUBO object_UBO = ObjectUBO {.model_matrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 0.0)), glm::vec3(0.3f)),
+                                                .ambient_color = glm::vec4(0.0f),
+                                                .diffuse_color = glm::vec4(1.0f),
+                                                .specular_color = glm::vec4(0.5f)};
+
+    object_instancer.SetBuffers(object_buffer_data, 3);
+
+    if(!glIsBuffer(buffer)){
+        assert(false);
+    }
+
+    glNamedBufferStorage(buffer, sizeof(ObjectUBO) * 100, nullptr, GL_UNIFORM_BUFFER);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ObjectUBO), &object_UBO);
+
+    ORS::BufferData object_dynamic_buffer_data = ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, &(buffer));
+    object_instancer.object_count = 1;
+    object_instancer.AddDynamicBuffer(&object_dynamic_buffer_data, 10);
 
     return object_instancer;
 }
@@ -547,6 +713,13 @@ namespace QOL{
 
     void ChangeMatrixRotationSubData(FunctionType<float, SubBufferType> data){
         glm::mat4 newMat = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 0.0)), data.data / 3.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        glNamedBufferSubData(data.args.buffer, data.args.index, data.args.size, &newMat);
+    }
+
+    void CreateMatrix(FunctionType<MatChange, SubBufferType> data){
+        glm::mat4 newMat = glm::translate(glm::mat4(1.0f), data.data.position);
+        newMat = glm::rotate(newMat, data.data.rotate / 3.0f, data.data.rotate_around);
+        newMat = glm::scale(newMat, data.data.size);
         glNamedBufferSubData(data.args.buffer, data.args.index, data.args.size, &newMat);
     }
 }

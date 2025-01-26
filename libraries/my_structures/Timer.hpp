@@ -3,7 +3,10 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <chrono>
 #include "QOL.hpp"
+
+//TODO make it time based not frame based
 
 template <typename T, typename Args>
 class Timer{
@@ -30,7 +33,7 @@ public:
     /* @param zero_val starting point*/
     /* @param one_val end point*/
     Timer(size_t frames_till_change, double(*func)(float), T(*f_change)(double, T, T), T zero_val, T hundred_val, int delay = 0){
-        time_left = frames_till_change + delay;
+        time_left = frames_till_change;
         max_size = frames_till_change;
         f = func;
         this->f_change = f_change;
@@ -39,8 +42,8 @@ public:
     }
 
     /* @note returns next iteration between start and stop*/
-    T next_value(){
-        if(time_left != 0) { --time_left; }
+    T next_value(size_t change_by = 1){
+        if(time_left != 0) { time_left -= change_by; }
         if (adress == nullptr){
             return f_change(Timer::clamp(f(std::max((double)(max_size - time_left), 0.0) / max_size)), start, stop);
         }

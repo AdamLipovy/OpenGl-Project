@@ -186,6 +186,7 @@ size_t GameController::eval()
 }
 
 void GameController::next_turn(){
+    if(status == END){ return; }
     if(status == TARGET){
         if(target_tiles_left != 0){
             selected_tile = target_tiles[target_tiles_count - target_tiles_left];
@@ -298,7 +299,7 @@ bool GameController::play(glm::ivec3 position){
 
     game_map.add(position, selected_tile);
     optional_map.remove(position);
-    if (selected_tile->target != 0){
+    if (selected_tile->target_type != 0){
         target_data[targets_active] = std::tuple<GameTileData*, glm::ivec3>(selected_tile, position);
         targets_active++;
     }

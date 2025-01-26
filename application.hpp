@@ -14,7 +14,6 @@
 #include "teapot.hpp"
 #include <string>
 #include <vector>
-#include <list>
 #include <map>
 
 #include "libraries/my_structures/GameController.hpp"
@@ -42,6 +41,12 @@ struct LightUBO {
     glm::vec4 ambient_color;
     glm::vec4 diffuse_color;
     glm::vec4 specular_color;
+};
+
+struct ImageData{
+    GLuint Id;
+    int image_width;
+    int image_height;
 };
 
 struct alignas(256) ObjectUBO {
@@ -141,8 +146,8 @@ class Application : public PV112Application {
     std::vector<ObjectUBO> objects_ubos;
 
     // Lights
-    std::vector<LightUBO> lights;
-    GLuint lights_buffer = 0;
+    std::vector<LightUBO> lights = std::vector<LightUBO>();
+    GLuint lights_count = 0;
 
     // Textures
     GLuint marble_texture = 0;
@@ -169,11 +174,19 @@ class Application : public PV112Application {
     std::vector<ORS::ORS> objectStorage = std::vector<ORS::ORS>();
     std::vector<ORS::ORS_instanced> objectInstancedStorage = std::vector<ORS::ORS_instanced>();
 
-    std::list<Timer<void*, QOL::SubBufferType>* >* timers = new std::list<Timer<void*, QOL::SubBufferType> *>();
+    std::vector<Timer<QOL::MatChange, QOL::SubBufferType>* >* timers = new std::vector<Timer<QOL::MatChange, QOL::SubBufferType> *>();
 
     // details
     
     std::map<int, std::vector<ORS::ORS_instanced>*>* details = nullptr;
+
+    // uiTextures
+    ImageData qTexture;
+    ImageData wTexture;
+    ImageData eTexture;
+    ImageData aTexture;
+    ImageData sTexture;
+    ImageData dTexture;
 
     // ----------------------------------------------------------------------------
     // Constructors & Destructors
@@ -236,19 +249,20 @@ private:
 
     void tile_setup(glm::ivec3 pos, HexTileUBO* adress);
     void tile_setup(ActiveHexTileUBO* adress);
-    void add_details(HexTileUBO* adress);
+    void add_details(HexTileUBO adress, glm::vec3 position);
     void CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size);
     ORS::ORS_instanced ORSSetup(std::filesystem::path name, size_t index);
+    ORS::ORS_instanced ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint buffer);
 };
 
 const glm::vec4 terrain_color[] = {
-    glm::vec4(0.17f, 0.92f, 0.31f, 1.0f), // MEADOW
-    glm::vec4(0.91f, 0.90f, 0.0f, 1.0f), // FIELD
-    glm::vec4(0.15f, 0.57f, 0.22f, 1.0f), // FOREST
-    glm::vec4(0.74f, 0.73f, 0.54f, 1.0f), // CITY
-    glm::vec4(0.75f, 0.75f, 0.75f, 1.0f), // RAIL
-    glm::vec4(0.56f, 0.82f, 0.84f, 1.0f), // WATER
-    glm::vec4(0.35f, 0.35f, 0.35f, 1.0f), // NONE
+    glm::vec4(0.17f, 0.92f, 0.31f, 0.3f), // MEADOW
+    glm::vec4(0.91f, 0.90f, 0.0f, 0.3f), // FIELD
+    glm::vec4(0.15f, 0.50f, 0.15f, 0.3f), // FOREST
+    glm::vec4(0.74f, 0.73f, 0.54f, 0.3f), // CITY
+    glm::vec4(0.75f, 0.75f, 0.75f, 0.3f), // RAIL
+    glm::vec4(0.56f, 0.82f, 0.84f, 0.3f), // WATER
+    glm::vec4(0.35f, 0.35f, 0.35f, 0.3f), // NONE
 };
 
 const float hex_vertex[] = {

@@ -28,12 +28,13 @@ layout(binding = 3, std140) uniform TileData{
     vec4 river2;
     vec4 river3;
     vec4 river4;
-    float rotation;
 } data;
 
 layout(binding = 4, std430) buffer Colors {
     vec4 color_map[];
 };
+
+layout(location = 5) uniform int light_count;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;

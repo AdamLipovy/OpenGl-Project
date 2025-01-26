@@ -3,7 +3,11 @@
 
 #include "camera.h"
 #include "glm_headers.hpp"
+
+#include <GLFW/glfw3.h>
 #include <algorithm>
+
+// TODO link it to timer for smooth camera movement
 
 class MovingCamera : public Camera{
 private:
@@ -25,6 +29,8 @@ public:
 
     void move(int key, int action);
     void on_mouse_move(double x, double y);
+
+    void on_mouse_button(int button, int action, int mods);
 
     glm::mat4x4 get_view_matrix() const;
     float get_distance() { return distance; }
@@ -50,5 +56,6 @@ public:
 
     glm::mat4x4 get_view_matrix() const;
     float get_distance() { return distance; }
+    void on_mouse_button(int button, int action, int mods);
 };
 

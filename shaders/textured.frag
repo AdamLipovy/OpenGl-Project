@@ -30,6 +30,7 @@ layout(binding = 2, std430) buffer Objects {
 };
 
 layout(location = 3) uniform bool has_texture = false;
+layout(location = 4) uniform int light_count;
 
 layout(binding = 3) uniform sampler2D albedo_texture;
 
@@ -45,8 +46,10 @@ void main() {
 	vec3 color_sum = vec3(0.0);
 
     Object object = objects[instance];
-	// Task 8.2: Iterate over all lights with for loop (.length() on a SSBO to retrieve its length).
-	for(int i = 0; i < lights.length(); i++) {
+
+	// final_color = vec4(has_texture ? texture(albedo_texture, fs_texture_coordinate).rgb : vec3(1.0), 1.0);
+	// return;
+	for(int i = 0; i < light_count; i++) {
 		Light light = lights[i];
 
 		vec3 light_vector = light.position.xyz - fs_position * light.position.w;

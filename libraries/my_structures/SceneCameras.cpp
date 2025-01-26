@@ -77,6 +77,25 @@ void MovingCamera::move(int key, int action) {
     }
 }
 
+void MovingCamera::on_mouse_button(int button, int action, int mods) {
+    // Left mouse button affects the angles.
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if (action == GLFW_PRESS) {
+            is_rotating = true;
+        } else {
+            is_rotating = false;
+        }
+    }
+    // Right mouse button affects the zoom.
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+        if (action == GLFW_PRESS) {
+            is_zooming = true;
+        } else {
+            is_zooming = false;
+        }
+    }
+}
+
 glm::mat4x4 MovingCamera::get_view_matrix() const {
     return glm::lookAt(eye_position, look_at, glm::vec3(0.0f, 1.0f, 0.0f));
 }
@@ -135,4 +154,23 @@ void SelectedCamera::move(int key, int action) {
 
 glm::mat4x4 SelectedCamera::get_view_matrix() const {
     return glm::lookAt(eye_position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+void SelectedCamera::on_mouse_button(int button, int action, int mods) {
+    // Left mouse button affects the angles.
+    if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if (action == GLFW_PRESS) {
+            is_rotating = true;
+        } else {
+            is_rotating = false;
+        }
+    }
+    // Right mouse button affects the zoom.
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+        if (action == GLFW_PRESS) {
+            is_zooming = true;
+        } else {
+            is_zooming = false;
+        }
+    }
 }

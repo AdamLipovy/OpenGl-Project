@@ -85,6 +85,7 @@ namespace ORS{
         ORS_instanced(Geometry* geometryData, TextureData* textureData, GLuint* program);
 
         void AddDynamicBuffer(BufferData*, size_t, size_t allocate_by = 10);
+        GLuint* GetDynamicBufferAdress();
 
         void AddInstanceBuffer(BufferData*, size_t);
 
