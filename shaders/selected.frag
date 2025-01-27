@@ -78,7 +78,7 @@ void main() {
     } else if (triangle == 5) {
         objColor = color_map[data.data2.w].rgb;
     } else {
-        objColor = color_map[6].rgb;
+        objColor = color_map[0].rgb;
     }
 
     vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;

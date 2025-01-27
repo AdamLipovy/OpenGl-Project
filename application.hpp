@@ -35,6 +35,19 @@ const glm::vec3 TRIANGLE_MIDDLES[6] = {glm::vec3(0.25f, 0.1f, 0.144f),
                                         glm::vec3(0.25f, 0.1f, -0.144f)
                                         };
 
+const std::filesystem::path adresses[7] = {"building-sample-house-b",
+                                            "building-sample-tower-a",
+                                            "campfire",
+                                            "target_tile",
+                                            "tree_small",
+                                            "tree_cone_tall",
+                                            "crops_wheatStageB"
+                                            };
+
+const int adresses_areas[7] = {CITY, CITY, CITY, NONE, FOREST, FOREST, FIELD};
+
+const int object_count = 7;
+
 // ----------------------------------------------------------------------------
 // UNIFORM STRUCTS
 // ----------------------------------------------------------------------------
@@ -258,20 +271,20 @@ private:
     void tile_setup(glm::ivec3 pos, HexTileUBO* adress);
     void tile_setup(ActiveHexTileUBO* adress);
     void add_details(HexTileUBO adress, glm::vec3 position);
-    void CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size);
+    void CreateObjectsORS(const std::filesystem::path* files, const int* areas, GLsizei size);
     ORS::ORS_instanced* ORSSetup(std::filesystem::path name, size_t index);
     ORS::ORS_instanced* ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint* buffer);
     void initialize_detail(glm::vec3, int, QOL::RenderObject*, int, int, QOL::MatChange);
 };
 
 const glm::vec4 terrain_color[] = {
+    glm::vec4(0.35f, 0.35f, 0.35f, 0.3f), // NONE
     glm::vec4(0.17f, 0.92f, 0.31f, 0.3f), // MEADOW
     glm::vec4(0.91f, 0.90f, 0.0f, 0.3f), // FIELD
     glm::vec4(0.15f, 0.50f, 0.15f, 0.3f), // FOREST
     glm::vec4(0.74f, 0.73f, 0.54f, 0.3f), // CITY
     glm::vec4(0.75f, 0.75f, 0.75f, 0.3f), // RAIL
     glm::vec4(0.56f, 0.82f, 0.84f, 0.3f), // WATER
-    glm::vec4(0.35f, 0.35f, 0.35f, 0.3f), // NONE
 };
 
 const float hex_vertex[] = {

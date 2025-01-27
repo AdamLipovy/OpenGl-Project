@@ -109,7 +109,7 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     camera_ubo.projection = glm::perspective(glm::radians(45.0f), (float(width) * 0.75f) / float(height), 0.01f, 100.0f);
     camera_ubo.view = glm::lookAt(camera.get_eye_position(), camera.look_at, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    lights.push_back({.position = glm::vec4(0.0, 5, 0.75, 1.0),
+    lights.push_back({.position = glm::vec4(0.0, 50, 0.75, 1.0),
                                  .ambient_color = glm::vec4(0.0f),
                                  .diffuse_color = glm::vec4(1.5f),
                                  .specular_color = glm::vec4(0.0f)});
@@ -237,14 +237,7 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     details->insert({(int)RAIL, new std::vector<ORS::ORS_instanced*>()});
     details->insert({(int)WATER, new std::vector<ORS::ORS_instanced*>()});
 
-    std::filesystem::path adresses[5] = {"building-sample-house-b",
-                                            "building-sample-tower-a",
-                                            "campfire",
-                                            "target_tile",
-                                            "tree_cone_tall"};
-    int adresses_areas[5] = {CITY, CITY, CITY, NONE, FOREST};
-
-    CreateObjectsORS(adresses, adresses_areas, 5);
+    CreateObjectsORS(adresses, adresses_areas, object_count);
 
     add_details(hex_tile_storage[index], temp);
 
@@ -381,18 +374,22 @@ void Application::render_ui() {
     if(ImGui::ImageButton((ImTextureID)(intptr_t)(qTexture.Id), ImVec2(qTexture.image_width, qTexture.image_height),
                                 ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
                                 { on_key_pressed(GLFW_KEY_Q, 0, GLFW_RELEASE, 0); }
+    ImGui::SameLine();
     if(ImGui::ImageButton((ImTextureID)(intptr_t)(wTexture.Id), ImVec2(wTexture.image_width, wTexture.image_height),
                                 ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
                                 { on_key_pressed(GLFW_KEY_W, 0, GLFW_RELEASE, 0); }
+    ImGui::SameLine();
     if(ImGui::ImageButton((ImTextureID)(intptr_t)(eTexture.Id), ImVec2(eTexture.image_width, eTexture.image_height),
                                 ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
                                 { on_key_pressed(GLFW_KEY_E, 0, GLFW_RELEASE, 0); }
     if(ImGui::ImageButton((ImTextureID)(intptr_t)(aTexture.Id), ImVec2(aTexture.image_width, aTexture.image_height),
                                 ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
                                 { on_key_pressed(GLFW_KEY_A, 0, GLFW_RELEASE, 0); }
+    ImGui::SameLine();
     if(ImGui::ImageButton((ImTextureID)(intptr_t)(sTexture.Id), ImVec2(sTexture.image_width, sTexture.image_height),
                                 ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
                                 { on_key_pressed(GLFW_KEY_S, 0, GLFW_RELEASE, 0); }
+    ImGui::SameLine();
     if(ImGui::ImageButton((ImTextureID)(intptr_t)(dTexture.Id), ImVec2(dTexture.image_width, dTexture.image_height),
                                 ImVec2(0, 0), ImVec2(1, 1), -1, ImVec4(0.5, 0.5, 0.5, 0), ImVec4(0.5, 0.5, 0.5, 1)))
                                 { on_key_pressed(GLFW_KEY_D, 0, GLFW_RELEASE, 0); }
@@ -557,13 +554,14 @@ void Application::tile_setup(ActiveHexTileUBO* adress){
 }
 
 void Application::initialize_detail(glm::vec3 tile_middle_pos, int delay, QOL::RenderObject* diffData, int type, int index, QOL::MatChange data){
-    glm::vec3 offset_pos = glm::vec3((rand() % 150) / 750.0f, 0.0f, (rand() % 150) / 750.0f);
+    glm::vec3 offset_pos = glm::vec3((rand() % 100) / 750.0f, 0.0f, (rand() % 100) / 750.0f);
     glm::vec3 position = offset_pos + tile_middle_pos;
     Timer<QOL::MatChange, QOL::SubBufferType>* timer = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
                                                         animation_functions::ease_in_ease_out, QOL::matTransition,
                                                         QOL::MatChange(data.rotate - 6, data.rotate_around, position, glm::vec3(0.001f)),
                                                         QOL::MatChange(data.rotate, data.rotate_around, position + data.position, data.size),
                                                         delay);
+    if((*(*details)[type]).size() <= index) { return; }
     GLsizei count = (*(*details)[type])[index]->object_count;
     GLuint* buffer = (*(*details)[type])[index]->GetDynamicBufferAdress();
     (*(*details)[type])[index]->AddInstance();
@@ -577,6 +575,10 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
 
     int hex_data[6] = {adress.triangle1, adress.triangle2, adress.triangle3, adress.triangle4, adress.triangle5, adress.triangle6};
     int delay = 100;
+    glm::vec3 fixed_pos = position;
+    if(position != glm::vec3(0.0f)){
+        // fixed_pos += glm::vec3(-0.05f, 0.0f, -0.2f);
+    }
     QOL::RenderObject* diffData = new QOL::RenderObject(glm::mat4(1.0f), glm::vec4(0.0f), glm::vec4(1.0f), glm::vec4(0.0f));
     for (size_t i = 0; i < 6; i++)
     {
@@ -586,18 +588,18 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
         case CITY:
             for (size_t x = 0; x < 3; x++)
             {
-                initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, CITY, 0,
+                initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, CITY, 0,
                                     QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.1f)});
                 delay += 30;
             }
-            initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, CITY, 1,
+            initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, CITY, 1,
                                 QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.1f)});
             delay += 30;
 
-            initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, CITY, 2,
-                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.05f)});
+            initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, CITY, 2,
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.05f, 0.0f), glm::vec3(0.05f)});
 
-            glm::vec3 campfire_position = TRIANGLE_MIDDLES[i] + position;
+            glm::vec3 campfire_position = TRIANGLE_MIDDLES[i] + fixed_pos;
             campfire_position.y = 0.4f;
 
             LightUBO newLight = LightUBO{.position = glm::vec4(campfire_position, 1.0f),
@@ -613,10 +615,29 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
             break;
 
         case FOREST:
-            for (size_t x = 0; x < 3; x++)
+            for (size_t x = 0; x < (rand() % 6); x++)
             {
-                initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, FOREST, 0,    
-                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.3f)});
+                float size = (rand() % 10) / 100.0f;
+                initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, FOREST, 0,    
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, size, 0.0f), glm::vec3(0.2f + size)});
+                delay += 30;
+            }
+            for (size_t x = 0; x < (rand() % 6); x++)
+            {
+                float size = (rand() % 10) / 100.0f;
+                initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, FOREST, 1,    
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, size, 0.0f), glm::vec3(0.2f + size)});
+                delay += 30;
+            }
+
+            delay += 30;
+            break;
+        case FIELD:
+            for (size_t x = 0; x < (rand() % 6); x++)
+            {
+                float size = (rand() % 10) / 100.0f;
+                initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, FIELD, 0,    
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, size, 0.0f), glm::vec3(0.2f + size)});
                 delay += 30;
             }
 
@@ -624,10 +645,9 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
             break;
         }
     }
-    
 }
 
-void Application::CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size){
+void Application::CreateObjectsORS(const std::filesystem::path* files, const int* areas, GLsizei size){
     object_buffers = new GLuint[size];
     glGenBuffers(size, object_buffers);
     objects_allocated = size;

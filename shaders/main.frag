@@ -99,7 +99,7 @@ void main() {
         } else if (triangle == 5) {
             objColor = color_map[hexData[instance].data2.w].rgb;
         } else {
-            objColor = color_map[6].rgb;
+            objColor = color_map[0].rgb;
         }
 
         vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;
@@ -108,7 +108,7 @@ void main() {
 
         vec3 color = vec3(0.0);
         if (i == 0){
-            color = 0.5 * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
+            color = 0.35 * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
         } else {
             color = (attenuation / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
         }

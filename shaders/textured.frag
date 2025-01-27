@@ -72,9 +72,9 @@ void main() {
 
 		vec3 color;
         if (i == 0)
-            color = ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular;
+            color = 0.25 * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, 4) * specular);
         else
-            color = (attenuation / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
+            color = (1 / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
 
 		color_sum += color;
 	}
