@@ -44,17 +44,17 @@ layout(location = 0) out vec4 final_color;
 void main() {
 
 	vec3 color_sum = vec3(0.0);
+	vec3 ambient_sum = vec3(0.0);
+	vec3 diffuse_sum = vec3(0.0);
+	vec3 specular_sum = vec3(0.0);
 
     Object object = objects[instance];
 
-	// final_color = vec4(has_texture ? texture(albedo_texture, fs_texture_coordinate).rgb : vec3(1.0), 1.0);
-	// return;
 	for(int i = 0; i < light_count; i++) {
 		Light light = lights[i];
 
         vec3 to_light = light.position.xyz - fs_position;
         float d = length(to_light);
-        float attenuation = clamp(1.0 / d, 0.0, 1.0);
         
         vec3 light_vector = light.position.xyz - fs_position * light.position.w;
         vec3 L = normalize(light_vector);
@@ -68,18 +68,19 @@ void main() {
 		vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;
 		vec3 diffuse = object.diffuse_color.rgb * (has_texture ? texture(albedo_texture, fs_texture_coordinate).rgb : vec3(1.0)) *
                         light.diffuse_color.rgb;
-		vec3 specular = object.specular_color.rgb * light.specular_color.rgb;
+		vec3 specular = object.specular_color.rgb * light.specular_color.rgb * pow(NdotH, 1024);
 
 		vec3 color;
         if (i == 0)
-            color = 0.25 * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, 4) * specular);
+            color = (ambient.rgb + NdotL * diffuse.rgb + specular);
         else
-            color = (1 / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
+            color = (1 / (2 + d * d * 10)) * (ambient.rgb + NdotL * diffuse.rgb + specular);
 
 		color_sum += color;
+        ambient_sum += ambient;
+        diffuse_sum = NdotL * diffuse.rgb;
+        specular_sum += specular;
 	}
 
-    color_sum = color_sum / (color_sum + 1.0);   // tone mapping
-    color_sum = pow(color_sum, vec3(1.0 / 2.2)); // gamma correction
 	final_color = vec4(color_sum, 1.0);
 }

@@ -279,9 +279,9 @@ private:
 
 const glm::vec4 terrain_color[] = {
     glm::vec4(0.35f, 0.35f, 0.35f, 0.3f), // NONE
-    glm::vec4(0.17f, 0.92f, 0.31f, 0.3f), // MEADOW
-    glm::vec4(0.91f, 0.90f, 0.0f, 0.3f), // FIELD
-    glm::vec4(0.15f, 0.50f, 0.15f, 0.3f), // FOREST
+    glm::vec4(0.66f, 0.74f, 0.36f, 0.3f), // MEADOW
+    glm::vec4(0.92f, 0.85f, 0.17f, 0.3f), // FIELD
+    glm::vec4(0.27f, 0.39f, 0.06f, 0.3f), // FOREST
     glm::vec4(0.74f, 0.73f, 0.54f, 0.3f), // CITY
     glm::vec4(0.75f, 0.75f, 0.75f, 0.3f), // RAIL
     glm::vec4(0.56f, 0.82f, 0.84f, 0.3f), // WATER

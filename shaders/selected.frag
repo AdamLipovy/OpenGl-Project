@@ -83,12 +83,9 @@ void main() {
 
     vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;
     vec3 diffuse = object.diffuse_color.rgb * objColor * light.diffuse_color.rgb;
-    vec3 specular = object.specular_color.rgb * light.specular_color.rgb;
+    vec3 specular = object.specular_color.rgb * light.specular_color.rgb * pow(NdotH, 1024);
 
-    vec3 color = vec3(0.0);
+    vec3 color = (ambient + NdotL * diffuse.rgb + specular);
 
-    color = attenuation * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
-
-    color = pow(color, vec3(1.0 / 2.2));
     final_color = vec4(color, 1.0);
 }

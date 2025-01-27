@@ -73,7 +73,6 @@ void main() {
         vec3 to_light = light.position.xyz - fs_position;
         float d = length(to_light);
         if(i > 0 && d > 1) { continue; }
-        float attenuation = clamp(1.0 / d, 0.0, 1.0);
         
         vec3 light_vector = light.position.xyz - fs_position * light.position.w;
         vec3 L = normalize(light_vector);
@@ -104,18 +103,17 @@ void main() {
 
         vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;
         vec3 diffuse = object.diffuse_color.rgb * objColor * light.diffuse_color.rgb;
-        vec3 specular = object.specular_color.rgb * light.specular_color.rgb;
+        vec3 specular = object.specular_color.rgb * light.specular_color.rgb * pow(NdotH, 1024);
 
         vec3 color = vec3(0.0);
         if (i == 0){
-            color = 0.35 * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
+            color = (diffuse.rgb + specular);
         } else {
-            color = (attenuation / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
+            color = (1 / (3 + d * d * 10)) * (ambient.rgb + NdotL * diffuse.rgb + specular);
         }
 
         color_sum += color;
     }
 
-    color_sum = pow(color_sum, vec3(1.0 / 2.2)); // gamma correction
     final_color = vec4(color_sum, 1.0);
 }

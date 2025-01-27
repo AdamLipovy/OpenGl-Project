@@ -41,6 +41,7 @@ layout(location = 3) out int instance;
 
 void main()
 {
+	vec3 offset = vec3(0.1, 0.0, 0.2);
 	instance = gl_InstanceID;
     Object object = objects[instance];
 	fs_position = vec3(object.model_matrix * vec4(position, 1.0)); 

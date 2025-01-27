@@ -19,11 +19,9 @@ namespace QOL{
         return mult * ((int)multOf + (rest > 0.5 ? 1 : 0));
     }
 
-    // TODO fix it somehow
     float hexagonRotation(double perc, float start, float end){
-        if(start - end > 3.0f){
-            start += 6;
-            return start + (end - start) * (float)perc;
+        if((start + 6 - end) < 3.0f){
+            return start + 6 + (start + 6 - end) * -perc;
         }
         return start + (end - start) * (float)perc;
     }

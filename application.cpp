@@ -94,8 +94,6 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glVertexArrayAttribFormat(hexagon_pos_indexed_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(hexagon_pos_indexed_vao, 0, 0);
 
-    std::cout << "0 done\n";
-
     glVertexArrayVertexBuffer(hexagon_pos_indexed_vao, 1, hexagon_normal_vertexes, 0, 3 * sizeof(float));
 
     glEnableVertexArrayAttrib(hexagon_pos_indexed_vao, 1);
@@ -110,14 +108,14 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     camera_ubo.view = glm::lookAt(camera.get_eye_position(), camera.look_at, glm::vec3(0.0f, 1.0f, 0.0f));
 
     lights.push_back({.position = glm::vec4(0.0, 50, 0.75, 1.0),
-                                 .ambient_color = glm::vec4(0.0f),
-                                 .diffuse_color = glm::vec4(1.5f),
-                                 .specular_color = glm::vec4(0.0f)});
+                                 .ambient_color = glm::vec4(0.5f),
+                                 .diffuse_color = glm::vec4(1.0f),
+                                 .specular_color = glm::vec4(1.0f)});
 
     objects_ubos.push_back({.model_matrix = glm::mat4(1.0f),
-                            .ambient_color = glm::vec4(0.0f),
-                            .diffuse_color = glm::vec4(1.0f),
-                            .specular_color = glm::vec4(0.0f)});
+                            .ambient_color = glm::vec4(1.0f),
+                            .diffuse_color = glm::vec4(0.5f),
+                            .specular_color = glm::vec4(0.5f)});
 
     // same for second camera
 
@@ -293,8 +291,6 @@ void Application::render() {
         if(!(*timers)[i]->is_active()){
             timers->erase(timers->begin() + i);
             resize = true;
-            std::cout << i;
-            std::cout << " rendered\n";
         }
     }
 
@@ -600,7 +596,7 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
                                 QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.05f, 0.0f), glm::vec3(0.05f)});
 
             glm::vec3 campfire_position = TRIANGLE_MIDDLES[i] + fixed_pos;
-            campfire_position.y = 0.4f;
+            campfire_position.y = 0.2f;
 
             LightUBO newLight = LightUBO{.position = glm::vec4(campfire_position, 1.0f),
                                         .ambient_color = glm::vec4(0.0f),
@@ -635,9 +631,9 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
         case FIELD:
             for (size_t x = 0; x < (rand() % 6); x++)
             {
-                float size = (rand() % 10) / 100.0f;
+                float size = (rand() % 10) / 500.0f;
                 initialize_detail(TRIANGLE_MIDDLES[triangle] + fixed_pos, delay, diffData, FIELD, 0,    
-                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, size, 0.0f), glm::vec3(0.2f + size)});
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, size, 0.0f), glm::vec3(0.1f + size)});
                 delay += 30;
             }
 
