@@ -48,13 +48,20 @@ layout(location = 0) out vec4 final_color;
 
 void main() {
 
+    vec3 pseudoLight = fs_position + vec3(0, 5, 0);
+
     // return;
+    vec3 to_light = pseudoLight - fs_position;
+    float d = length(to_light);
+    float attenuation = clamp(1.0 / d, 0.0, 1.0);
 
-    vec3 light_vector = light.position.xyz - fs_position * light.position.w;
-    vec3 N = normalize(fs_normal);
+    vec3 L = normalize(pseudoLight);
     vec3 E = normalize(camera.position - fs_position);
+    vec3 N = normalize(fs_normal);
+    vec3 H = normalize(L + E);
 
-    vec3 ambient;
+    float NdotL = max(dot(N, L), 0.0);
+    float NdotH = max(dot(N, H), 0.0001);
 
     vec3 objColor;
 
@@ -74,16 +81,14 @@ void main() {
         objColor = color_map[6].rgb;
     }
 
-    ambient = objColor * light.ambient_color.rgb;
+    vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;
+    vec3 diffuse = object.diffuse_color.rgb * objColor * light.diffuse_color.rgb;
+    vec3 specular = object.specular_color.rgb * light.specular_color.rgb;
 
-    vec3 diffuse = max(dot(N, E), 0.0) * light.diffuse_color.rgb;
+    vec3 color = vec3(0.0);
 
-    float specularStrength = 1;
-    vec3 reflectDir = reflect(-E, N);  
-    float spec = pow(max(dot(E, reflectDir), 0.0), 256);
-    vec3 specular = specularStrength * spec * light.specular_color.rgb;
+    color = attenuation * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
 
-    vec3 color = (diffuse + ambient + specular) * objColor;
-
+    color = pow(color, vec3(1.0 / 2.2));
     final_color = vec4(color, 1.0);
 }

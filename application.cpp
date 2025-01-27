@@ -94,6 +94,8 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glVertexArrayAttribFormat(hexagon_pos_indexed_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(hexagon_pos_indexed_vao, 0, 0);
 
+    std::cout << "0 done\n";
+
     glVertexArrayVertexBuffer(hexagon_pos_indexed_vao, 1, hexagon_normal_vertexes, 0, 3 * sizeof(float));
 
     glEnableVertexArrayAttrib(hexagon_pos_indexed_vao, 1);
@@ -107,9 +109,9 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     camera_ubo.projection = glm::perspective(glm::radians(45.0f), (float(width) * 0.75f) / float(height), 0.01f, 100.0f);
     camera_ubo.view = glm::lookAt(camera.get_eye_position(), camera.look_at, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    lights.push_back({.position = glm::vec4(0.0, 1.45, 0.75, 1.0),
+    lights.push_back({.position = glm::vec4(0.0, 5, 0.75, 1.0),
                                  .ambient_color = glm::vec4(0.0f),
-                                 .diffuse_color = glm::vec4(1.0f),
+                                 .diffuse_color = glm::vec4(1.5f),
                                  .specular_color = glm::vec4(0.0f)});
 
     objects_ubos.push_back({.model_matrix = glm::mat4(1.0f),
@@ -136,8 +138,11 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     glCreateBuffers(1, &camera_buffer);
     glNamedBufferStorage(camera_buffer, sizeof(CameraUBO), &camera_ubo, GL_DYNAMIC_STORAGE_BIT);
 
-    glCreateBuffers(1, &light_buffer);
-    glNamedBufferStorage(light_buffer, sizeof(LightUBO) * 100, lights.data(), GL_DYNAMIC_STORAGE_BIT);
+    glGenBuffers(1, &light_buffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, light_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(LightUBO) * 1000, lights.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, light_buffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     glCreateBuffers(1, &objects_buffer);
     glNamedBufferStorage(objects_buffer, sizeof(ObjectUBO), objects_ubos.data(), GL_DYNAMIC_STORAGE_BIT);
@@ -159,7 +164,11 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
 
     glNamedBufferStorage(tile_position_buffer, sizeof(glm::vec3) * gm_controller->tiles_count, position_storage, GL_DYNAMIC_STORAGE_BIT);
 
-    glNamedBufferStorage(tile_data, sizeof(HexTileUBO) * gm_controller->tiles_count, hex_tile_storage, GL_DYNAMIC_STORAGE_BIT);
+    glGenBuffers(1, &tile_data);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, tile_data);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(HexTileUBO) * gm_controller->tiles_count, hex_tile_storage, GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tile_data);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     tile_setup(active_tile_storage);
 
@@ -172,14 +181,12 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     QOL::SubBufferType args1 = QOL::SubBufferType((size_t)visualize_placement, (size_t)0, (size_t)sizeof(glm::vec4));
     QOL::SubBufferType args2 = QOL::SubBufferType((size_t)selected_object_buffer, (size_t)0, (size_t)sizeof(glm::mat4));
 
-    visualize_movement_transitions = new Timer<glm::vec4, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<glm::vec4>, tempVec4, glm::vec4(1.0f));
-    // visualize_movement_transitions->directChange(args1, QOL::ChangeBufferSubData);
+    visualize_movement_transitions = new Timer<glm::vec4, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::basicTimer<glm::vec4>, tempVec4, glm::vec4(0.0f));
 
-    visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::hexagonRotation, 0.0f, 1.0f);
-    // visualize_rotation_transitions->directChange(args2, QOL::ChangeMatrixRotationSubData);
+    visualize_rotation_transitions = new Timer<float, QOL::SubBufferType>(300, animation_functions::ease_in_ease_out, QOL::hexagonRotation, 0.0f, 0.0f);
 
 
-    ORS::ORS_instanced hexagonRS = ORS::ORS_instanced(
+    ORS::ORS_instanced* hexagonRS = new ORS::ORS_instanced(
                                         new ORS::ArrayData(GL_TRIANGLES, 0, 54),
                                         &main_program
                                         );
@@ -196,11 +203,11 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
             ORS::BufferData(GL_MAP1_INDEX, 6, &lights_count)
         };
 
-    hexagonRS.SetBuffers(hexagonBuffers, 8);
+    hexagonRS->SetBuffers(hexagonBuffers, 8);
 
     objectInstancedStorage.push_back(hexagonRS);
 
-    ORS::ORS selectedRS = ORS::ORS(
+    ORS::ORS* selectedRS = new ORS::ORS(
                                     new ORS::ArrayData(GL_TRIANGLES, 0 , 54),
                                     &selected_tile_program
                                 );
@@ -216,21 +223,19 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
             ORS::BufferData(GL_VERTEX_ARRAY, 0, &hexagon_pos_indexed_vao),
         };
     
-    selectedRS.SetBuffers(selectedBuffers, 7);
+    selectedRS->SetBuffers(selectedBuffers, 7);
 
     objectStorage.push_back(selectedRS);
 
     // details:
 
-    details = new std::map<int, std::vector<ORS::ORS_instanced>*>();
-
-    details->insert({(int)NONE, new std::vector<ORS::ORS_instanced>()});
-    details->insert({(int)MEADOW, new std::vector<ORS::ORS_instanced>()});
-    details->insert({(int)FIELD, new std::vector<ORS::ORS_instanced>()});
-    details->insert({(int)FOREST, new std::vector<ORS::ORS_instanced>()});
-    details->insert({(int)CITY, new std::vector<ORS::ORS_instanced>()});
-    details->insert({(int)RAIL, new std::vector<ORS::ORS_instanced>()});
-    details->insert({(int)WATER, new std::vector<ORS::ORS_instanced>()});
+    details->insert({(int)NONE, new std::vector<ORS::ORS_instanced*>()});
+    details->insert({(int)MEADOW, new std::vector<ORS::ORS_instanced*>()});
+    details->insert({(int)FIELD, new std::vector<ORS::ORS_instanced*>()});
+    details->insert({(int)FOREST, new std::vector<ORS::ORS_instanced*>()});
+    details->insert({(int)CITY, new std::vector<ORS::ORS_instanced*>()});
+    details->insert({(int)RAIL, new std::vector<ORS::ORS_instanced*>()});
+    details->insert({(int)WATER, new std::vector<ORS::ORS_instanced*>()});
 
     std::filesystem::path adresses[5] = {"building-sample-house-b",
                                             "building-sample-tower-a",
@@ -240,6 +245,8 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
     int adresses_areas[5] = {CITY, CITY, CITY, NONE, FOREST};
 
     CreateObjectsORS(adresses, adresses_areas, 5);
+
+    add_details(hex_tile_storage[index], temp);
 
     compile_shaders();
 }
@@ -293,12 +300,12 @@ void Application::render() {
         if(!(*timers)[i]->is_active()){
             timers->erase(timers->begin() + i);
             resize = true;
+            std::cout << i;
+            std::cout << " rendered\n";
         }
     }
 
     if(resize) timers->shrink_to_fit();
-
-    std::for_each(timers->begin(), timers->end(), [](Timer<QOL::MatChange, QOL::SubBufferType>* clock) {  ;} );
 
     glm::mat4 selected_tile_mat = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(selected_pos)), selected_rotate_by * 3.14f / 3.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 active_tile_mat = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)), selected_rotate_by * 3.14f / 3.0f, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -341,14 +348,14 @@ void Application::render() {
     // Draw objects
     for(int i = 0; i < 7; i++){
         for(int o = 0; o < (*(*details)[i]).size(); o++){
-            (*(*details)[i])[o].render();
+            (*(*details)[i])[o]->render();
         }
     }
 
-    objectInstancedStorage[0].object_count = gm_controller->tile_count();
-    objectInstancedStorage[0].render();
+    objectInstancedStorage[0]->object_count = gm_controller->tile_count();
+    objectInstancedStorage[0]->render();
 
-    objectStorage[0].render();
+    objectStorage[0]->render();
 
     glNamedBufferSubData((size_t)selected_object_buffer, (size_t)0, (size_t)sizeof(glm::mat4), &active_tile_mat);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, selected_camera_buffer);
@@ -549,75 +556,71 @@ void Application::tile_setup(ActiveHexTileUBO* adress){
     adress->rail2 = glm::vec4(0);
 }
 
+void Application::initialize_detail(glm::vec3 tile_middle_pos, int delay, QOL::RenderObject* diffData, int type, int index, QOL::MatChange data){
+    glm::vec3 offset_pos = glm::vec3((rand() % 150) / 750.0f, 0.0f, (rand() % 150) / 750.0f);
+    glm::vec3 position = offset_pos + tile_middle_pos;
+    Timer<QOL::MatChange, QOL::SubBufferType>* timer = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
+                                                        animation_functions::ease_in_ease_out, QOL::matTransition,
+                                                        QOL::MatChange(data.rotate - 6, data.rotate_around, position, glm::vec3(0.001f)),
+                                                        QOL::MatChange(data.rotate, data.rotate_around, position + data.position, data.size),
+                                                        delay);
+    GLsizei count = (*(*details)[type])[index]->object_count;
+    GLuint* buffer = (*(*details)[type])[index]->GetDynamicBufferAdress();
+    (*(*details)[type])[index]->AddInstance();
+
+    glNamedBufferSubData(*buffer, count * sizeof(QOL::RenderObject), sizeof(QOL::RenderObject), diffData);
+    timer->directChange(QOL::SubBufferType(*buffer, count * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
+    timers->push_back(timer);
+}
+
 void Application::add_details(HexTileUBO adress, glm::vec3 position){
 
     int hex_data[6] = {adress.triangle1, adress.triangle2, adress.triangle3, adress.triangle4, adress.triangle5, adress.triangle6};
-    int delay = 300;
+    int delay = 100;
+    QOL::RenderObject* diffData = new QOL::RenderObject(glm::mat4(1.0f), glm::vec4(0.0f), glm::vec4(1.0f), glm::vec4(0.0f));
     for (size_t i = 0; i < 6; i++)
     {
-        switch (hex_data[(i + adress.rotation) % 6])
+        int triangle = (i - adress.rotation + 6) % 6;
+        switch (hex_data[i])
         {
         case CITY:
-            glm::vec3 tile_offset_pos = gm_controller->VecToSpace(OFFSETMAP[i]) / 4;
             for (size_t x = 0; x < 3; x++)
             {
-                glm::vec3 offset_pos = glm::vec3((rand() % 150) / 1000.0f, 0.0f, (rand() % 150) / 1000.0f);
-                Timer<QOL::MatChange, QOL::SubBufferType>* temp = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
-                                                                    animation_functions::ease_in_ease_out, QOL::matTransition,
-                                                                    QOL::MatChange(0, glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position, glm::vec3(0.01f)),
-                                                                    QOL::MatChange((rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position + glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.2f)),
-                                                                    delay);
-                GLsizei offset = (*(*details)[CITY])[0].object_count;
-                GLuint* buffer = (*(*details)[CITY])[0].GetDynamicBufferAdress();
-                (*(*details)[CITY])[0].AddInstance();
-
-                temp->directChange(QOL::SubBufferType(*buffer, offset * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
-                timers->push_back(temp);
-
-                delay += 300;
+                initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, CITY, 0,
+                                    QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.1f)});
+                delay += 30;
             }
+            initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, CITY, 1,
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.1f)});
+            delay += 30;
 
-            glm::vec3 offset_pos = glm::vec3((rand() % 150) / 1000.0f, 0.0f, (rand() % 150) / 1000.0f);
-            Timer<QOL::MatChange, QOL::SubBufferType>* temp3 = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
-                                                                animation_functions::ease_in_ease_out, QOL::matTransition,
-                                                                QOL::MatChange(0, glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position, glm::vec3(0.01f)),
-                                                                QOL::MatChange((rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position + glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.3f)),
-                                                                delay);
-            GLsizei offset3 = (*(*details)[CITY])[1].object_count;
-            GLuint* buffer3 = (*(*details)[CITY])[1].GetDynamicBufferAdress();
-            (*(*details)[CITY])[1].AddInstance();
+            initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, CITY, 2,
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.05f)});
 
-            temp3->directChange(QOL::SubBufferType(*buffer3, offset3 * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
-            timers->push_back(temp3);
+            glm::vec3 campfire_position = TRIANGLE_MIDDLES[i] + position;
+            campfire_position.y = 0.4f;
 
-            delay += 300;
-
-            // glm::vec3 offset_pos = glm::vec3(0.0f);
-            offset_pos = glm::vec3((rand() % 150) / 1000.0f, 0.0f, (rand() % 150) / 500.0f);
-            Timer<QOL::MatChange, QOL::SubBufferType>* campfire_timer = new Timer<QOL::MatChange, QOL::SubBufferType>(150,
-                                                                animation_functions::ease_in_ease_out, QOL::matTransition,
-                                                                QOL::MatChange(0, glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position, glm::vec3(0.01f)),
-                                                                QOL::MatChange((rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), offset_pos + tile_offset_pos + position + glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.3f)),
-                                                                delay);
-            GLsizei campfire_count = (*(*details)[CITY])[2].object_count;
-            GLuint* campfire_buffer = (*(*details)[CITY])[2].GetDynamicBufferAdress();
-            (*(*details)[CITY])[2].AddInstance();
-
-            LightUBO newLight = LightUBO{.position = glm::vec4(offset_pos + tile_offset_pos + position, 1.0f),
+            LightUBO newLight = LightUBO{.position = glm::vec4(campfire_position, 1.0f),
                                         .ambient_color = glm::vec4(0.0f),
-                                        .diffuse_color = glm::vec4(0.23f, 0.23f, 0.0f, 1.0f),
+                                        .diffuse_color = glm::vec4(1.1f, 1.1f, 1.0f, 1.0f),
                                         .specular_color = glm::vec4(0.0f)};
 
             glNamedBufferSubData(light_buffer, lights_count * sizeof(LightUBO), sizeof(LightUBO), &newLight);
-
             lights_count++;
-
             lights.push_back(newLight);
 
-            campfire_timer->directChange(QOL::SubBufferType(*campfire_buffer, campfire_count * sizeof(QOL::RenderObject), sizeof(glm::mat4)), QOL::CreateMatrix);
-            timers->push_back(campfire_timer);
+            delay += 30;
+            break;
 
-            delay += 100;
+        case FOREST:
+            for (size_t x = 0; x < 3; x++)
+            {
+                initialize_detail(TRIANGLE_MIDDLES[triangle] + position, delay, diffData, FOREST, 0,    
+                                QOL::MatChange{(float)(rand() % 6), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.1f, 0.0f), glm::vec3(0.3f)});
+                delay += 30;
+            }
+
+            delay += 30;
             break;
         }
     }
@@ -626,61 +629,71 @@ void Application::add_details(HexTileUBO adress, glm::vec3 position){
 
 void Application::CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size){
     object_buffers = new GLuint[size];
-    glCreateBuffers(size, object_buffers);
+    glGenBuffers(size, object_buffers);
     objects_allocated = size;
+    std::filesystem::path targets[4] = {"3target.png", "4target.png", "5target.png", "6target.png"};
     for (size_t i = 0; i < size; i++)
     {
         if(areas[i] != NONE){
             (*details)[areas[i]]->push_back(ORSSetup(files[i], i));
+        } else{
+            // TODO 
+        //     std::filesystem::path object_path = objects_path / files[i];
+        //     object_path.replace_extension(".obj");
+        //     for(int i = 0; i < 4; i++){
+
+        //         (*details)[areas[i]]->push_back(ORSSetup(object_path, targets[i], &(object_buffers[i])));
+        //     }
         }
     }
 }
 
-ORS::ORS_instanced Application::ORSSetup(std::filesystem::path name, size_t index){
+ORS::ORS_instanced* Application::ORSSetup(std::filesystem::path name, size_t index){
     std::filesystem::path object_path = objects_path / name;
     object_path.replace_extension(".obj");
-    Geometry object_geometry = Geometry::from_file(object_path);
+    Geometry* object_geometry = new Geometry();
+    *object_geometry = Geometry::from_file(object_path);
     object_path = images_path / name;
     object_path.replace_extension(".jpg");
-    ORS::TextureData object_texture = ORS::TextureData(3, load_texture_2d(object_path));
-    ORS::ORS_instanced object_instancer = ORS::ORS_instanced(&object_geometry, &object_texture, &textured_objects_program);
+    ORS::TextureData* object_texture = new ORS::TextureData(5, load_texture_2d(object_path));
+    ORS::ORS_instanced* object_instancer = new ORS::ORS_instanced(object_geometry, object_texture, &textured_objects_program);
 
-    ORS::BufferData* object_buffer_data = new ORS::BufferData[3]{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, object_buffers[index]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ObjectUBO) * 1000, nullptr, GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, object_buffers[index]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    ORS::BufferData* object_buffer_data = new ORS::BufferData[4]{
             ORS::BufferData(GL_UNIFORM_BUFFER, 0, &camera_buffer),
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 1, &light_buffer),
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, &(object_buffers[index])),
             ORS::BufferData(GL_MAP1_INDEX, 4, &lights_count),
         };
 
-    ObjectUBO object_UBO = ObjectUBO {.model_matrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 0.0)), glm::vec3(0.3f)),
-                                                .ambient_color = glm::vec4(0.0f),
-                                                .diffuse_color = glm::vec4(1.0f),
-                                                .specular_color = glm::vec4(0.5f)};
+    object_instancer->SetBuffers(object_buffer_data, 4);
 
-    object_instancer.SetBuffers(object_buffer_data, 3);
-
-    if(!glIsBuffer(object_buffers[index])){
-        assert(false);
-    }
-
-    glNamedBufferStorage(object_buffers[index], sizeof(ObjectUBO) * 100, &object_UBO, GL_UNIFORM_BUFFER);
-
-    std::cout << "allocated 100 object buffer";
 
     ORS::BufferData object_dynamic_buffer_data = ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, &(object_buffers[index]));
-    object_instancer.object_count = 0;
-    object_instancer.AddDynamicBuffer(&object_dynamic_buffer_data, 10);
+    object_instancer->object_count = 0;
+    object_instancer->AddDynamicBuffer(&object_dynamic_buffer_data, 10);
 
     return object_instancer;
 }
 
-ORS::ORS_instanced Application::ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint buffer){
+ORS::ORS_instanced* Application::ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint* buffer){
     Geometry object_geometry = Geometry::from_file(object);
     ORS::TextureData object_texture = ORS::TextureData(3, load_texture_2d(texture));
-    ORS::ORS_instanced object_instancer = ORS::ORS_instanced(&object_geometry, &object_texture, &textured_objects_program);
+    ORS::ORS_instanced* object_instancer = new ORS::ORS_instanced(&object_geometry, &object_texture, &textured_objects_program);
 
-    ORS::BufferData* object_buffer_data = new ORS::BufferData[3]{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, *buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ObjectUBO) * 1000, nullptr, GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, *buffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    ORS::BufferData* object_buffer_data = new ORS::BufferData[4]{
             ORS::BufferData(GL_UNIFORM_BUFFER, 0, &camera_buffer),
             ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 1, &light_buffer),
+            ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, buffer),
             ORS::BufferData(GL_MAP1_INDEX, 4, &lights_count),
         };
 
@@ -689,18 +702,11 @@ ORS::ORS_instanced Application::ORSSetup(std::filesystem::path object, std::file
                                                 .diffuse_color = glm::vec4(1.0f),
                                                 .specular_color = glm::vec4(0.5f)};
 
-    object_instancer.SetBuffers(object_buffer_data, 3);
+    object_instancer->SetBuffers(object_buffer_data, 4);
 
-    if(!glIsBuffer(buffer)){
-        assert(false);
-    }
-
-    glNamedBufferStorage(buffer, sizeof(ObjectUBO) * 100, nullptr, GL_UNIFORM_BUFFER);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ObjectUBO), &object_UBO);
-
-    ORS::BufferData object_dynamic_buffer_data = ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, &(buffer));
-    object_instancer.object_count = 1;
-    object_instancer.AddDynamicBuffer(&object_dynamic_buffer_data, 10);
+    ORS::BufferData object_dynamic_buffer_data = ORS::BufferData(GL_SHADER_STORAGE_BUFFER, 2, buffer);
+    object_instancer->object_count = 0;
+    object_instancer->AddDynamicBuffer(&object_dynamic_buffer_data, 10);
 
     return object_instancer;
 }

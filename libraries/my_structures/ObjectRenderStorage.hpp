@@ -50,8 +50,8 @@ namespace ORS{
     protected:
         std::vector<BufferData> buffers;
         Option<GLuint*> program;
-        Option<Geometry> geometry;
-        Option<TextureData> texture;
+        Option<Geometry*> geometry;
+        Option<TextureData*> texture;
         Option<ArrayData> drawArrays;
 
         void bind();

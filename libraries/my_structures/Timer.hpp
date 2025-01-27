@@ -33,7 +33,7 @@ public:
     /* @param zero_val starting point*/
     /* @param one_val end point*/
     Timer(size_t frames_till_change, double(*func)(float), T(*f_change)(double, T, T), T zero_val, T hundred_val, int delay = 0){
-        time_left = frames_till_change;
+        time_left = frames_till_change + delay;
         max_size = frames_till_change;
         f = func;
         this->f_change = f_change;

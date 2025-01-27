@@ -27,6 +27,14 @@
 
 #define sqrt3fourth 0.433f // could also be CENTER_DIST / 2 - current solution is faster
 
+const glm::vec3 TRIANGLE_MIDDLES[6] = {glm::vec3(0.25f, 0.1f, 0.144f),
+                                        glm::vec3(0.0f, 0.1f, 0.289f),
+                                        glm::vec3(-0.25f, 0.1f, 0.144f),
+                                        glm::vec3(-0.25f, 0.1f, -0.144f),
+                                        glm::vec3(0.0f, 0.1f, -0.289f),
+                                        glm::vec3(0.25f, 0.1f, -0.144f)
+                                        };
+
 // ----------------------------------------------------------------------------
 // UNIFORM STRUCTS
 // ----------------------------------------------------------------------------
@@ -171,14 +179,14 @@ class Application : public PV112Application {
     Timer<glm::vec4, QOL::SubBufferType>* visualize_movement_transitions = nullptr;
     Timer<float, QOL::SubBufferType>* visualize_rotation_transitions = nullptr;
 
-    std::vector<ORS::ORS> objectStorage = std::vector<ORS::ORS>();
-    std::vector<ORS::ORS_instanced> objectInstancedStorage = std::vector<ORS::ORS_instanced>();
+    std::vector<ORS::ORS*> objectStorage = std::vector<ORS::ORS*>();
+    std::vector<ORS::ORS_instanced*> objectInstancedStorage = std::vector<ORS::ORS_instanced*>();
 
     std::vector<Timer<QOL::MatChange, QOL::SubBufferType>* >* timers = new std::vector<Timer<QOL::MatChange, QOL::SubBufferType> *>();
 
     // details
     
-    std::map<int, std::vector<ORS::ORS_instanced>*>* details = nullptr;
+    std::map<int, std::vector<ORS::ORS_instanced*>*>* details = new std::map<int, std::vector<ORS::ORS_instanced*>*>();
 
     // uiTextures
     ImageData qTexture;
@@ -251,8 +259,9 @@ private:
     void tile_setup(ActiveHexTileUBO* adress);
     void add_details(HexTileUBO adress, glm::vec3 position);
     void CreateObjectsORS(std::filesystem::path* files, int* areas, GLsizei size);
-    ORS::ORS_instanced ORSSetup(std::filesystem::path name, size_t index);
-    ORS::ORS_instanced ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint buffer);
+    ORS::ORS_instanced* ORSSetup(std::filesystem::path name, size_t index);
+    ORS::ORS_instanced* ORSSetup(std::filesystem::path object, std::filesystem::path texture, GLuint* buffer);
+    void initialize_detail(glm::vec3, int, QOL::RenderObject*, int, int, QOL::MatChange);
 };
 
 const glm::vec4 terrain_color[] = {

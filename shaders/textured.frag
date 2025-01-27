@@ -32,7 +32,7 @@ layout(binding = 2, std430) buffer Objects {
 layout(location = 3) uniform bool has_texture = false;
 layout(location = 4) uniform int light_count;
 
-layout(binding = 3) uniform sampler2D albedo_texture;
+layout(binding = 5) uniform sampler2D albedo_texture;
 
 layout(location = 0) in vec3 fs_position;
 layout(location = 1) in vec3 fs_normal;
@@ -52,24 +52,29 @@ void main() {
 	for(int i = 0; i < light_count; i++) {
 		Light light = lights[i];
 
-		vec3 light_vector = light.position.xyz - fs_position * light.position.w;
-		vec3 L = normalize(light_vector);
-		vec3 N = normalize(fs_normal);
-		vec3 E = normalize(camera.position - fs_position); 
-		vec3 H = normalize(L + E);
+        vec3 to_light = light.position.xyz - fs_position;
+        float d = length(to_light);
+        float attenuation = clamp(1.0 / d, 0.0, 1.0);
+        
+        vec3 light_vector = light.position.xyz - fs_position * light.position.w;
+        vec3 L = normalize(light_vector);
+        vec3 E = normalize(camera.position - fs_position);
+        vec3 N = normalize(fs_normal);
+        vec3 H = normalize(L + E);
 
-		float NdotL = max(dot(N, L), 0.0);
-		float NdotH = max(dot(N, H), 0.0001);
+        float NdotL = max(dot(N, L), 0.0);
+        float NdotH = max(dot(N, H), 0.0001);
 
 		vec3 ambient = object.ambient_color.rgb * light.ambient_color.rgb;
 		vec3 diffuse = object.diffuse_color.rgb * (has_texture ? texture(albedo_texture, fs_texture_coordinate).rgb : vec3(1.0)) *
                         light.diffuse_color.rgb;
 		vec3 specular = object.specular_color.rgb * light.specular_color.rgb;
 
-		vec3 color = ambient.rgb
-			+ NdotL * diffuse.rgb
-			+ pow(NdotH, object.specular_color.w) * specular;
-		color /= dot(light_vector, light_vector);
+		vec3 color;
+        if (i == 0)
+            color = ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular;
+        else
+            color = (attenuation / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
 
 		color_sum += color;
 	}

@@ -34,7 +34,6 @@ layout(binding = 2, std140) uniform Object {
 	vec4 specular_color;
 } object;
 
-
 layout(binding = 3, std430) buffer HexData{
 	HexTile hexData[];
 };
@@ -57,10 +56,10 @@ layout(location = 4) in float increaseMap;
 
 layout(location = 0) out vec4 final_color;
 
-float start = 0.5f;
-float end = 15.0f;
-vec3 fog_color = vec3(0.7f, 0.7f, 0.75f);
-uniform mat4 gWorld;
+// float start = 0.5f;
+// float end = 15.0f;
+// vec3 fog_color = vec3(0.7f, 0.7f, 0.75f);
+// uniform mat4 gWorld;
 
 
 void main() {
@@ -73,6 +72,7 @@ void main() {
 
         vec3 to_light = light.position.xyz - fs_position;
         float d = length(to_light);
+        if(i > 0 && d > 1) { continue; }
         float attenuation = clamp(1.0 / d, 0.0, 1.0);
         
         vec3 light_vector = light.position.xyz - fs_position * light.position.w;
@@ -108,9 +108,9 @@ void main() {
 
         vec3 color = vec3(0.0);
         if (i == 0){
-            color = (attenuation / 10.0) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
+            color = 0.5 * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
         } else {
-            color = (attenuation / 1000.0) * ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular;
+            color = (attenuation / (d * 50)) * (ambient.rgb + NdotL * diffuse.rgb + pow(NdotH, object.specular_color.w) * specular);
         }
 
         color_sum += color;
@@ -118,8 +118,4 @@ void main() {
 
     color_sum = pow(color_sum, vec3(1.0 / 2.2)); // gamma correction
     final_color = vec4(color_sum, 1.0);
-
-    float distance = length(fs_position - camera.position);
-    float fog_factor = clamp((end - distance) / (end - start), 0.0, 1.0);
-    final_color = mix(vec4(fog_color, 1.0), final_color, fog_factor);
 }

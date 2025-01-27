@@ -26,15 +26,15 @@ namespace ORS{
 
     ORS::ORS(ArrayData* arrayData, GLuint* program = 0){
         this->program = Option<GLuint*>(program);
-        geometry = Option<Geometry>();
-        texture = Option<TextureData>();
+        geometry = Option<Geometry*>();
+        texture = Option<TextureData*>();
         drawArrays = Option<ArrayData>(*arrayData);
     }
 
     ORS::ORS(Geometry* geometryData, TextureData* textureData, GLuint* program = 0){
         this->program = Option<GLuint*>(program);
-        geometry = Option<Geometry>(*geometryData);
-        texture = Option<TextureData>(*textureData);
+        geometry = Option<Geometry*>(geometryData);
+        texture = Option<TextureData*>(textureData);
         drawArrays = Option<ArrayData>();
     }
 
@@ -43,13 +43,10 @@ namespace ORS{
     void ORS::AddBuffer(BufferData* newBuff, size_t buffCount){
         for (size_t i = 0; i < buffCount; i++){
             AddBuffer(newBuff[i]);
-            std::cout << i;
-            std::cout << " done\n";
         }
     }
 
     void ORS::SetBuffers(BufferData* newBuff, size_t buffCount){
-        buffers.clear();
         AddBuffer(newBuff, buffCount);
     }
 
@@ -61,14 +58,14 @@ namespace ORS{
         bind();
         if(texture.toggle){
             if(program.toggle) glUniform1i(glGetUniformLocation(*(program.value), "has_texture"), true);
-            glBindTextureUnit(texture.value.adress, texture.value.texture);
+            glBindTextureUnit(texture.value->adress, texture.value->texture);
         }
         else if(drawArrays.toggle){
             ArrayData ptr = drawArrays.value;
             glDrawArrays(ptr.type, ptr.offset, ptr.point_count);
         }
         else if(geometry.toggle){
-            geometry.value.draw();
+            geometry.value->draw();
         }
     }
 
@@ -110,10 +107,8 @@ namespace ORS{
             glBindBufferBase(dynBuff.type, dynBuff.binding, *(dynBuff.adress));
         }
         if(texture.toggle){
-            if(program.toggle) {
-                glUniform1i(glGetUniformLocation(*(program.value), "has_texture"), true);
-            }
-            glBindTextureUnit(texture.value.adress, texture.value.texture);
+            glUniform1i(glGetUniformLocation(*(program.value), "has_texture"), true);
+            glBindTextureUnit(texture.value->adress, texture.value->texture);
         }
         if(drawArrays.toggle){
             ArrayData ptr = drawArrays.value;
@@ -121,7 +116,7 @@ namespace ORS{
         }
         //TODO instancing for geometries
         else if(geometry.toggle){
-            geometry.value.draw_instanced(object_count);
+            geometry.value->draw_instanced(object_count);
         }
     }
 }
