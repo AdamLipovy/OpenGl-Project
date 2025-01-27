@@ -55,6 +55,7 @@ void main() {
 
         vec3 to_light = light.position.xyz - fs_position;
         float d = length(to_light);
+        if(i != 0 && d > 1) { continue; }
         
         vec3 light_vector = light.position.xyz - fs_position * light.position.w;
         vec3 L = normalize(light_vector);
@@ -74,7 +75,7 @@ void main() {
         if (i == 0)
             color = (ambient.rgb + NdotL * diffuse.rgb + specular);
         else
-            color = (1 / (2 + d * d * 10)) * (ambient.rgb + NdotL * diffuse.rgb + specular);
+            color = (d / (2 + d * d)) * (ambient.rgb + NdotL * diffuse.rgb + specular);
 
 		color_sum += color;
         ambient_sum += ambient;
