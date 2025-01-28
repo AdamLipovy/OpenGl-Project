@@ -22,10 +22,10 @@ namespace QOL{
 
     float hexagonRotation(double perc, float start, float end);
 
-    template <typename T, typename args>
+    template <typename T, typename Args>
     struct FunctionType {
         T data;
-        args args;
+        Args args;
     };
 
     struct RenderObject {

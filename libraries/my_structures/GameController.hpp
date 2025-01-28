@@ -71,7 +71,7 @@ private:
     /* @return - -1 if count of connected tiles was less than target_count*/
     /* @return - 0 if count of connected tiles was equal to target_count*/
     /* @return - 1 if count of connected tiles was more than target_count*/
-    size_t flood_check(glm::ivec3, TerrainTypes, size_t);
+    int flood_check(glm::ivec3, TerrainTypes, size_t);
 
     /* @note shuffles items based on pseudorandom values*/
     /* @param list array that wants to be shuffled*/

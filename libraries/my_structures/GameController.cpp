@@ -11,7 +11,7 @@ bool contains(std::vector<T> vec, T el)
     return false;
 }
 
-size_t GameController::flood_check(glm::ivec3 origin, TerrainTypes type, size_t target_count)
+int GameController::flood_check(glm::ivec3 origin, TerrainTypes type, size_t target_count)
 {
     std::deque<glm::ivec3> q;
     std::vector<glm::ivec3> seen = std::vector<glm::ivec3>();
