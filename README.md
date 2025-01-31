@@ -4,5 +4,4 @@ to
   set(dir_name {curent directory name})
 
 Also there might be different path to where the project is compiled to thus two last commands of CMake can throw errors.
-If this happenes there is no reason to panic.
 Only thing you need to do is to find build's parent directory and put there data.json and ambient_sound.wav
