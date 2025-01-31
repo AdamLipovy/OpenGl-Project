@@ -38,8 +38,8 @@ void printEnumToString(GameStatus t)
     case END:
         std::cout << "END";
         return;
-    case ERROR:
-        std::cout << "ERROR";
+    case GAME_ERROR:
+        std::cout << "GAME_ERROR";
         return;
     }
 }

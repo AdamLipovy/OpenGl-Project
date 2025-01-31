@@ -46,6 +46,10 @@ layout(location = 2) flat in int triangle;
 
 layout(location = 0) out vec4 final_color;
 
+float start = 0.5f;
+float end = 15.0f;
+vec4 fog_color = vec4(0.3f, 0.3f, 0.25f, 1.0);
+
 void main() {
 
     vec3 pseudoLight = fs_position + vec3(0, 5, 0);
@@ -87,5 +91,10 @@ void main() {
 
     vec3 color = (ambient + NdotL * diffuse.rgb + specular);
 
+    float distance = length(fs_position - camera.position);
+    float fog_factor = clamp((end - distance) / (end - start), 0.0, 1.0);
+
     final_color = vec4(color, 1.0);
+
+    final_color = mix(fog_color, final_color, fog_factor);
 }

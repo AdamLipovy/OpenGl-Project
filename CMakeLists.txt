@@ -19,37 +19,10 @@ target_sources(${lecture_name} PUBLIC libraries/my_structures/MapManager.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/QOL.cpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/Timer.hpp)
 target_sources(${lecture_name} PUBLIC libraries/my_structures/GameTileData.cpp)
-
-add_library(GameController STATIC libraries/my_structures/GameController.cpp
-                    libraries/my_structures/GameTileData.cpp
-                    libraries/my_structures/Randomiser.cpp)
-
-add_library(ObjectRenderStorage STATIC libraries/my_structures/ObjectRenderStorage.cpp)
-
-add_library(QualityOfLife STATIC libraries/my_structures/QOL.cpp)
-
-add_library(Camera STATIC libraries/my_structures/SceneCameras.cpp)
-
-target_include_directories(GameController PUBLIC libraries/my_structures)
-
-find_package(glm CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
-find_package(tinyobjloader CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-#include <GLFW/glfw3.h>
-
-target_link_libraries(GameController PUBLIC glm::glm)
-target_link_libraries(GameController PRIVATE glad::glad)
-
-target_link_libraries(QualityOfLife PRIVATE glad::glad)
-
-target_link_libraries(Camera PRIVATE glfw)
-
-target_link_libraries(ObjectRenderStorage PUBLIC include geometries)
-target_link_libraries(ObjectRenderStorage PRIVATE glad::glad)
-
+target_link_libraries(${lecture_name} PUBLIC winmm)
 
 set(copy_file_name "data.json")
+set(copy_file_name "Warm-Memories-Emotional-Inspiring-Piano(chosic.com).wav")
 
 add_custom_command(
     TARGET ${lecture_name} POST_BUILD

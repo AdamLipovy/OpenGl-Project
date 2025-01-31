@@ -3,7 +3,6 @@
 
 #include <cstdlib>
 #include <algorithm>
-#include <chrono>
 #include "QOL.hpp"
 
 //TODO make it time based not frame based
@@ -51,6 +50,10 @@ public:
 
         adress(QOL::FunctionType(temp, args));
         return temp;
+    }
+
+    T cur_value(){
+        return f_change(Timer::clamp(f(std::max((double)(max_size - time_left), 0.0) / max_size)), start, stop);
     }
 
     void reconfig(size_t frames_till_change) { time_left = frames_till_change; }

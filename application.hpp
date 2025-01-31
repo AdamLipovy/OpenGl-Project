@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include<iostream>
+#include<windows.h>
+
 #include "camera.h"
 #include "cube.hpp"
 #include "pv112_application.hpp"

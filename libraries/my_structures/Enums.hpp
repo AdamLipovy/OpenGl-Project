@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <cstdlib>
-#include <cstdint>
 #include <cmath>
 
 #ifndef SQRTDIST
@@ -25,5 +23,5 @@ enum GameStatus{
     TARGET,
     NO_MOVE,
     END,
-    ERROR
+    GAME_ERROR,
 };

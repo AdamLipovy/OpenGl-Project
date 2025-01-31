@@ -127,7 +127,7 @@ bool GameController::load()
 
     if (data.empty())
     {
-        status = ERROR;
+        status = GAME_ERROR;
         perror("[ERROR] - storage was nonexistant or empty\n");
         assert(false);
         return false;
@@ -135,7 +135,7 @@ bool GameController::load()
 
     if (!data.contains("tiles")
         || !data["tiles"].is_array()){
-        status = ERROR;
+        status = GAME_ERROR;
         perror("[ERROR PARSING] - JSON does not contain tiles or is not an array\n");
         assert(false);
         return false;        

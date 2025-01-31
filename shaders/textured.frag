@@ -41,6 +41,10 @@ layout(location = 3) in flat int instance;
 
 layout(location = 0) out vec4 final_color;
 
+float start = 0.5f;
+float end = 15.0f;
+vec4 fog_color = vec4(0.3f, 0.3f, 0.25f, 1.0);
+
 void main() {
 
 	vec3 color_sum = vec3(0.0);
@@ -75,7 +79,7 @@ void main() {
         if (i == 0)
             color = (ambient.rgb + NdotL * diffuse.rgb + specular);
         else
-            color = (d / (2 + d * d)) * (ambient.rgb + NdotL * diffuse.rgb + specular);
+            color = (1 / (5 + d * d * 10)) * (ambient.rgb + NdotL * diffuse.rgb + specular);
 
 		color_sum += color;
         ambient_sum += ambient;
@@ -83,5 +87,9 @@ void main() {
         specular_sum += specular;
 	}
 
+    float distance = length(fs_position - camera.position);
+    float fog_factor = clamp((end - distance) / (end - start), 0.0, 1.0);
 	final_color = vec4(color_sum, 1.0);
+    final_color = mix(fog_color, final_color, fog_factor);
+
 }
