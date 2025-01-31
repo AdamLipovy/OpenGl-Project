@@ -128,7 +128,7 @@ Application::Application(int initial_width, int initial_height, std::vector<std:
                                         .diffuse_color = glm::vec4(1.0f),
                                         .specular_color = glm::vec4(0.5f)};
 
-    PlaySound(TEXT("..\\Warm-Memories-Emotional-Inspiring-Piano(chosic.com).wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+    PlaySound(TEXT("..\\ambient_sound.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 
     // // --------------------------------------------------------------------------
     // // Create Buffers

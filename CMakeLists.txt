@@ -22,7 +22,7 @@ target_sources(${lecture_name} PUBLIC libraries/my_structures/GameTileData.cpp)
 target_link_libraries(${lecture_name} PUBLIC winmm)
 
 set(copy_file_name "data.json")
-set(copy_file_name "Warm-Memories-Emotional-Inspiring-Piano(chosic.com).wav")
+set(copy_file_name "ambient_sound.wav")
 
 add_custom_command(
     TARGET ${lecture_name} POST_BUILD
